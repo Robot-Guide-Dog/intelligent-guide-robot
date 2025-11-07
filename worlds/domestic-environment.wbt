@@ -1,16 +1,36 @@
 #VRML_SIM R2025a utf8
+
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackground.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
-EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/floors/protos/RectangleArena.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/robots/robotis/turtlebot/protos/TurtleBot3Burger.proto"
+EXTERNPROTO "../protos/SimpleTwoFloorsHouse.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/floors/protos/Floor.proto"
+
 WorldInfo {
 }
 Viewpoint {
-  orientation -0.5773 0.5773 0.5773 2.0944
-  position 0 0 10
+  orientation 0.26586307405777254 -0.01910935922388413 -0.9638213829556821 3.279913598673128
+  position 2.5141098652640013 1.1498046420854269 4.253250453871955
 }
 TexturedBackground {
 }
 TexturedBackgroundLight {
 }
-RectangleArena {
+TurtleBot3Burger {
+  hidden position_0_0 2.3708767927477556e-05
+  hidden position_0_1 -1.559609265733286e-05
+  hidden position_0_2 11.279133507027124
+  hidden position2_0_2 -13.684189930147589
+  hidden position3_0_2 -2.16646725917639
+  hidden rotation_8 0 -1 0 1.5707722912320723
+  hidden rotation_9 -0.7070992670958036 -1.814445440080639e-11 -0.7071142951974436 3.141588
+  hidden rotation_10 0.17031239318148822 -0.8093910711436177 -0.5620318342245225 1.8574609338441457
+  translation 0.032003039411751984 -0.11376529056061559 -0.030632152271526762
+  rotation 0.1703123931814881 -0.8093910711436179 -0.5620318342245225 -1.8574609338441457
+}
+SimpleTwoFloorsHouse {
+  scale 0.3
+}
+Floor {
+  size 50 50
 }
