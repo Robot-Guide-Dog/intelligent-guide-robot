@@ -2,35 +2,69 @@
 
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackground.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
-EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/robots/robotis/turtlebot/protos/TurtleBot3Burger.proto"
-EXTERNPROTO "../protos/SimpleTwoFloorsHouse.proto"
-EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/floors/protos/Floor.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/floors/protos/RectangleArena.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/apartment_structure/protos/Wall.proto"
 
 WorldInfo {
 }
 Viewpoint {
-  orientation 0.26586307405777254 -0.01910935922388413 -0.9638213829556821 3.279913598673128
-  position 2.5141098652640013 1.1498046420854269 4.253250453871955
+  orientation -0.2838608032818518 0.2623763267006511 0.922269866984309 1.729754294988744
+  position -0.9935874972903596 -18.99726315697047 18.607793141144125
 }
 TexturedBackground {
 }
 TexturedBackgroundLight {
 }
-TurtleBot3Burger {
-  hidden position_0_0 2.3708767927477556e-05
-  hidden position_0_1 -1.559609265733286e-05
-  hidden position_0_2 11.279133507027124
-  hidden position2_0_2 -13.684189930147589
-  hidden position3_0_2 -2.16646725917639
-  hidden rotation_8 0 -1 0 1.5707722912320723
-  hidden rotation_9 -0.7070992670958036 -1.814445440080639e-11 -0.7071142951974436 3.141588
-  hidden rotation_10 0.17031239318148822 -0.8093910711436177 -0.5620318342245225 1.8574609338441457
-  translation 0.032003039411751984 -0.11376529056061559 -0.030632152271526762
-  rotation 0.1703123931814881 -0.8093910711436179 -0.5620318342245225 -1.8574609338441457
+RectangleArena {
+  name "Floor"
+  floorSize 11 11
 }
-SimpleTwoFloorsHouse {
-  scale 0.3
+Wall {
+  translation -1.36255 -2.23916 6.64358e-13
+  name "Kitchen"
+  size 0.25 6 2.4
 }
-Floor {
-  size 50 50
+Wall {
+  translation -2.90381 2.55265 1.16351e-13
+  name "Bathroom Wall 1"
+  size 0.2 4.1 2.4
+}
+Wall {
+  translation -3.97785 0.641423 1.77635e-14
+  rotation 0 0 1 -1.5707953071795862
+  name "Bathroom Wall 2"
+  size 0.25 2.1 2.4
+}
+Wall {
+  translation 5.12769 -0.246481 2.57572e-14
+  name "North Wall"
+  size 0.25 10 2.4
+}
+Wall {
+  translation -5.12423 -0.254596 1.77635e-15
+  name "South Wall"
+  size 0.25 10 2.4
+}
+Wall {
+  translation 0.00165744 4.63465 -2.18492e-13
+  rotation 0 0 1 -1.5707953071795862
+  name "West Wall"
+  size 0.25 10 2.4
+}
+Wall {
+  translation -0.00427783 -5.129 -1.77636e-15
+  rotation 0 0 1 -1.5707953071795862
+  name "East Wall"
+  size 0.25 10 2.4
+}
+Wall {
+  translation 0.441969 -0.26277 0
+  rotation 0 0 -1 -5.307179586466759e-06
+  name "Bedroom"
+  size 0.25 10 2.4
+}
+Wall {
+  translation 2.739 -1.60852 0
+  rotation 0 0 1 1.5708
+  size 0.25 4.8 2.4
 }
