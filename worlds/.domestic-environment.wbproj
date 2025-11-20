@@ -6,9 +6,7 @@ maximizedDockId: -1
 centralWidgetVisible: 1
 projectionMode: PERSPECTIVE
 orthographicViewHeight: 1
-textFiles: 2 "protos/TurtleBot3Burger.proto" "controllers/turtlebot3_ostacle_avoidance/turtlebot3_ostacle_avoidance.c" "protos/RobotisLds01.proto"
-robotWindow: TurtleBot3Burger
+textFiles: 2 "protos/TurtleBot3Burger.proto" "controllers/turtlebot3_ostacle_avoidance/turtlebot3_ostacle_avoidance.c" "protos/Chair.proto"
 globalOptionalRendering: LidarPointClouds
-supportPolygon: TurtleBot3Burger
 consoles: Console:All:All
 renderingDevicePerspectives: TurtleBot3Burger:camera;0;0.895833;0;0
