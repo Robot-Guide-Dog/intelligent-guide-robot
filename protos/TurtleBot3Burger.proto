@@ -277,7 +277,7 @@ PROTO TurtleBot3Burger [
       }
       Camera {
         name "camera"
-        translation 0 0 0.20
+        translation 0 0 0.40
         rotation 0 1 0 0
         fieldOfView 1.0
         width 640

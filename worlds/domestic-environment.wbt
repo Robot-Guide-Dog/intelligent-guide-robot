@@ -4,67 +4,188 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/project
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/floors/protos/RectangleArena.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/apartment_structure/protos/Wall.proto"
+EXTERNPROTO "../protos/TurtleBot3Burger.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/humans/pedestrian/protos/Pedestrian.proto"
+EXTERNPROTO "../protos/Table.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/apartment_structure/protos/Door.proto"
+EXTERNPROTO "../protos/Chair.proto"
 
 WorldInfo {
 }
 Viewpoint {
-  orientation -0.2838608032818518 0.2623763267006511 0.922269866984309 1.729754294988744
-  position -0.9935874972903596 -18.99726315697047 18.607793141144125
+  orientation -0.1435148337302666 -0.7429615810761492 0.6537672227514949 5.708621309783574
+  position -6.8600902166268085 2.031248222634337 4.26727022017266
 }
 TexturedBackground {
 }
 TexturedBackgroundLight {
 }
 RectangleArena {
+  translation -0.100208 -0.0119692 0
   name "Floor"
-  floorSize 11 11
+  floorSize 5 5
+  wallThickness 0
+  wallHeight 0.0001
 }
 Wall {
-  translation -1.36255 -2.23916 6.64358e-13
+  translation -0.277553 -1.64966 1.09246e-13
+  rotation 0 0 -1 -5.307179586466759e-06
+  name "Bedroom(1)"
+  size 0.05 1.65 0.5
+}
+Wall {
+  translation -0.871707 -1.25504 8.37997e-13
   name "Kitchen"
-  size 0.25 6 2.4
+  size 0.05 2.5 0.5
 }
 Wall {
-  translation -2.90381 2.55265 1.16351e-13
+  translation -1.57216 1.45484 4.88494e-14
   name "Bathroom Wall 1"
-  size 0.2 4.1 2.4
+  size 0.05 2.05 0.5
 }
 Wall {
-  translation -3.97785 0.641423 1.77635e-14
+  translation -4.4068 -4.40036 1.77635e-14
   rotation 0 0 1 -1.5707953071795862
   name "Bathroom Wall 2"
   size 0.25 2.1 2.4
 }
 Wall {
-  translation 5.12769 -0.246481 2.57572e-14
+  translation 2.38673 -0.00884595 1.35891e-13
   name "North Wall"
-  size 0.25 10 2.4
+  size 0.05 5.01 0.5
 }
 Wall {
-  translation -5.12423 -0.254596 1.77635e-15
+  translation -2.57197 -0.00846873 -0.006454
   name "South Wall"
-  size 0.25 10 2.4
+  size 0.05 5 0.5
 }
 Wall {
-  translation 0.00165744 4.63465 -2.18492e-13
+  translation -0.0940695 2.47127 -2.18048e-13
   rotation 0 0 1 -1.5707953071795862
   name "West Wall"
-  size 0.25 10 2.4
+  size 0.05 5 0.5
 }
 Wall {
-  translation -0.00427783 -5.129 -1.77636e-15
+  translation -1.66198 -2.49256 -1.77636e-15
   rotation 0 0 1 -1.5707953071795862
   name "East Wall"
-  size 0.25 10 2.4
+  size 0.05 1.88 0.5
 }
 Wall {
-  translation 0.441969 -0.26277 0
-  rotation 0 0 -1 -5.307179586466759e-06
+  translation 0.988301 -2.48947 7.10542e-15
+  rotation 0 0 1 -1.5707953071795862
+  name "East Wall(1)"
+  size 0.05 2.83 0.5
+}
+Wall {
+  translation 0.673573 -0.0170032 3.99677e-14
+  rotation 0 0 1 5.307156870259904e-06
   name "Bedroom"
-  size 0.25 10 2.4
+  size 0.05 0.33 0.5
 }
 Wall {
-  translation 2.739 -1.60852 0
+  translation -0.280505 -0.356174 3.99677e-14
+  rotation 0 0 1 5.307156870259904e-06
+  name "Bedroom(3)"
+  size 0.05 0.33 0.5
+}
+Wall {
+  translation 0.664701 1.45828 2.0961e-13
+  rotation 0 0 -1 -5.307179586466759e-06
+  name "Bedroom(2)"
+  size 0.05 2.02 0.5
+}
+Wall {
+  translation 1.04285 -0.198729 8.12683e-14
   rotation 0 0 1 1.5708
-  size 0.25 4.8 2.4
+  size 0.05 2.7 0.5
+}
+TurtleBot3Burger {
+  hidden position_0_0 5196.174191483397
+  hidden position_0_1 8906.840175472653
+  hidden position_0_2 1816.8463428272162
+  hidden position2_0_2 -2107.5425287619205
+  hidden position3_0_2 -97138.649641694
+  hidden linearVelocity_0 -0.0205624342275602 -0.045026526056210936 -3.657597272230052e-10
+  hidden angularVelocity_0 1.3814031713181974e-07 3.4728937366477405e-07 0.010845186276512214
+  hidden position_1_0 34511.92319997715
+  hidden position_1_1 66843.36639995682
+  hidden rotation_2 0.5608419243626768 0.5854288249033605 0.5854309753074569 4.163847561073847
+  hidden translation_3 -0.08993880575599128 -0.010000000000000007 -0.01361548195023841
+  hidden rotation_3 -0.10643821415539015 0.7030886412737701 0.7030912238672982 2.929515476804512
+  hidden rotation_8 0 1 0 4.69233175305903
+  hidden linearVelocity_8 -0.020589048700490113 -0.04596724342612446 2.9507394539204195e-08
+  hidden angularVelocity_8 1.3952040651753366 -0.6249223075466224 0.010899538057164026
+  hidden rotation_9 0.5420710528782519 -2.2744569974553503e-06 -0.8403326565273365 3.1415916721217956
+  hidden linearVelocity_9 -0.019879703055665186 -0.04438359655640692 -2.906676503538963e-08
+  hidden angularVelocity_9 1.342700586853379 -0.6014048109189427 0.010894974631866061
+  hidden rotation_10 0.3606657567416097 -0.7817886017589165 -0.5086519380419584 3.0344689579087243
+  hidden linearVelocity_10 -0.021034767433820697 -0.04481694527219828 -1.05275882312209e-09
+  hidden angularVelocity_10 11.20423631798877 -5.258691858584683 -0.002153560617009408
+  translation 0.9941725253751442 -0.7943976833851132 -0.00024774042824730197
+  rotation 0.0023239854524351616 0.0014991090757961372 0.9999961758744859 -1.9917380275404586
+}
+Pose {
+  translation 1 0 0
+  children [
+    Pedestrian {
+      translation 0.228444 0.198702 1.27
+      controllerArgs [
+        ""
+      ]
+    }
+  ]
+  translationStep 0.04
+  rotationStep 0
+}
+Pose {
+}
+Table {
+  translation -1.67341 -1.30528 -3.08197e-13
+  rotation 0 0 1 -1.5707953071795862
+  size 0.7 0.35 0.23
+  feetSize 0.05 0.05
+}
+Door {
+  hidden translation_4 0.0010015928918983598 2.663611594067028e-07 1.1102230246251565e-16
+  hidden rotation_4 0 0 -1 1.0654778321067003e-05
+  hidden linearVelocity_4 3.4781924088298438e-16 3.75748830160344e-18 -4.8102692505650194e-11
+  hidden angularVelocity_4 7.029411687578554e-12 -1.2224965133443776e-12 1.4350377694282641e-18
+  translation -0.276547 -0.67358 0
+  rotation 0 0 1 3.14159
+  name "bedroom_door_2"
+  size 0.05 0.3 0.5
+  position -1.0654785814862294e-05
+  frameHeight 0.5
+  frameSize 0.001 0.001 0.001
+  doorHandle NULL
+}
+Door {
+  hidden translation_4 0.0010010636008349963 1.778557821019433e-07 8.326672684688674e-17
+  hidden rotation_4 0 0 -1 7.114395519192366e-06
+  translation 0.672402 0.300079 -3.99679e-15
+  rotation 0 0 1 3.14159
+  name "bedroom_door_1"
+  size 0.05 0.3 0.5
+  position -7.114382624218406e-06
+  frameHeight 0.5
+  frameSize 0.001 0.001 0.001
+  doorHandle NULL
+}
+Door {
+  hidden translation_4 0.0010010636008350345 1.778557821019433e-07 8.326672684688674e-17
+  hidden rotation_4 0 0 -0.9999999999999999 7.114395519192366e-06
+  hidden linearVelocity_4 -6.977108617217366e-16 5.551621288130093e-15 -4.810273056606432e-11
+  hidden angularVelocity_4 1.2225135286487519e-12 7.029143777826755e-12 -1.0295594739594862e-18
+  translation -0.573102 -2.49 5.77316e-15
+  rotation 0 0 1 -1.5707953071795862
+  name "front door"
+  size 0.05 0.3 0.5
+  position -7.1143826244717115e-06
+  frameHeight 0.5
+  frameSize 0.001 0.001 0.001
+  doorHandle NULL
+}
+Chair {
+  translation -1.73286 -0.419998 -3.10862e-15
 }
