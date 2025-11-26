@@ -36,11 +36,11 @@ int main(int argc, char **argv) {
   // get and enable the lidar
   WbDeviceTag lidar = wb_robot_get_device("LDS-01");
   wb_lidar_enable(lidar, TIME_STEP);
-  wb_lidar_enable_point_cloud(lidar);
+  //wb_lidar_enable_point_cloud(lidar);
   
   //get and enable the camera
-  WbDeviceTag camera = wb_robot_get_device("camera");
-  wb_camera_enable(camera, TIME_STEP);
+  // WbDeviceTag camera = wb_robot_get_device("camera");
+  // wb_camera_enable(camera, TIME_STEP);
 
 
   // get lidar motor and enable rotation (only for visualization, no effect on the sensor)

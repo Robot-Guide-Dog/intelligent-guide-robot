@@ -273,11 +273,39 @@ PROTO TurtleBot3Burger [
               url "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/robots/robotis/turtlebot/protos/meshes/bars.obj"
             }
           }
+          DEF ROPE_HOOK Solid {
+            name "rope"
+            translation -0.05 -0.1 1  # height where rope attaches
+          }
+          HingeJoint {
+            jointParameters HingeJointParameters {
+              axis 0 1 0
+              anchor 0 0 0.15
+            }
+            endPoint DEF ROPE_SEGMENT Solid {
+              name "ropes"
+              translation 0 0 0.15
+              children [
+                Shape {
+                  geometry Capsule {
+                    height 0.3
+                    radius 0.005
+                  }
+                  appearance PBRAppearance { baseColor 0.2 0.2 0.2 }
+                }
+              ]
+              boundingObject Capsule {
+                height 0.3
+                radius 0.005
+              }
+              physics Physics { mass 0.05 }
+            }
+          }
         ]
       }
       Camera {
         name "camera"
-        translation 0 0 0.40
+        translation 0 0 0.20
         rotation 0 1 0 0
         fieldOfView 1.0
         width 640
