@@ -30,7 +30,7 @@
 #include <webots/robot.h>
 
 #define TIME_STEP 32
-#define MAX_VELOCITY 26
+#define MAX_VELOCITY 20
 
 int main(int argc, char *argv[]) {
   /* define variables */
@@ -38,7 +38,7 @@ int main(int argc, char *argv[]) {
   WbDeviceTag front_left_motor, front_right_motor, rear_left_motor, rear_right_motor, front_left_position_sensor,
     front_right_position_sensor, rear_left_position_sensor, rear_right_position_sensor;
   double avoidance_speed[2];
-  const double base_speed = 6.0;
+  const double base_speed = 2.5;
   double motor_speed[2];
   /* RGBD camera */
   WbDeviceTag camera_rgb, camera_depth;
