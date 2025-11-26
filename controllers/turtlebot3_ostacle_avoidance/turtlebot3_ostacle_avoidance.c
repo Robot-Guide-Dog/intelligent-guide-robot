@@ -36,7 +36,7 @@ int main(int argc, char **argv) {
   // get and enable the lidar
   WbDeviceTag lidar = wb_robot_get_device("LDS-01");
   wb_lidar_enable(lidar, TIME_STEP);
-  //wb_lidar_enable_point_cloud(lidar);
+  wb_lidar_enable_point_cloud(lidar);
   
   //get and enable the camera
   // WbDeviceTag camera = wb_robot_get_device("camera");
