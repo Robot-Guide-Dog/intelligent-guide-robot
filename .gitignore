@@ -1,0 +1,31 @@
+# Compiled executables (platform-specific)
+controllers/*/rosbot
+controllers/*/turtlebot3_ostacle_avoidance
+controllers/*/*.exe
+controllers/*/*.dll
+controllers/*/*.so
+controllers/*/*.dylib
+
+# Build artifacts
+controllers/*/build/
+*.o
+*.d
+*.class
+*.jar
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
