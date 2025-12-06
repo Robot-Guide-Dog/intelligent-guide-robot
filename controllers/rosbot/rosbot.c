@@ -16,6 +16,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdbool.h>
 
 #include <webots/accelerometer.h>
 #include <webots/camera.h>
@@ -31,6 +32,81 @@
 
 #define TIME_STEP 32
 #define MAX_VELOCITY 20
+
+void rgb_to_hsv(unsigned char r, unsigned char g, unsigned char b,
+                float *h, float *s, float *v) {
+
+  float rf = r / 255.0;
+  float gf = g / 255.0;
+  float bf = b / 255.0;
+
+  float max = rf;
+  if (gf > max) max = gf;
+  if (bf > max) max = bf;
+
+  float min = rf;
+  if (gf < min) min = gf;
+  if (bf < min) min = bf;
+
+  float delta = max - min;
+
+  // Value
+  *v = max;
+
+  // Saturation
+  if (max == 0)
+    *s = 0;
+  else
+    *s = delta / max;
+
+  // Hue calculation
+  if (delta == 0) {
+    *h = 0;
+  } else if (max == rf) {
+    *h = 60 * fmod(((gf - bf) / delta), 6);
+  } else if (max == gf) {
+    *h = 60 * (((bf - rf) / delta) + 2);
+  } else {
+    *h = 60 * (((rf - gf) / delta) + 4);
+  }
+
+  if (*h < 0)
+    *h += 360;
+}
+
+bool is_user_in_view(WbDeviceTag camera) {
+  int width = wb_camera_get_width(camera);
+  int height = wb_camera_get_height(camera);
+  const unsigned char *image = wb_camera_get_image(camera);
+
+  if (!image)
+    return false;
+
+  int match_count = 0;
+
+  for (int y = 0; y < height; y += 2) {
+    for (int x = 0; x < width; x += 2) {
+      unsigned char r = wb_camera_image_get_red(image, width, x, y);
+      unsigned char g = wb_camera_image_get_green(image, width, x, y);
+      unsigned char b = wb_camera_image_get_blue(image, width, x, y);
+
+      float h, s, v;
+      rgb_to_hsv(r, g, b, &h, &s, &v);
+
+      bool is_green =
+        (h > 60 && h < 170) &&   // Green hue
+        (s > 0.35) &&            // Saturated
+        (v > 0.10);              // Allow shadows
+
+      if (is_green)
+        match_count++;
+    }
+  }
+
+  printf("HSV match_count = %d\n", match_count);
+
+  return match_count > 40;
+}
 
 int main(int argc, char *argv[]) {
   /* define variables */
@@ -121,20 +197,60 @@ int main(int argc, char *argv[]) {
     for (i = 0; i < 4; i++)
       distance_sensors_value[i] = wb_distance_sensor_get_value(distance_sensors[i]);
 
-    /* compute motors speed */
-    for (i = 0; i < 2; ++i) {
-      avoidance_speed[i] = 0.0;
-      for (j = 1; j < 3; ++j)
-        avoidance_speed[i] += (2.0 - distance_sensors_value[j]) * (2.0 - distance_sensors_value[j]) * coefficients[i][j - 1];
-      motor_speed[i] = base_speed + avoidance_speed[i];
-      motor_speed[i] = motor_speed[i] > MAX_VELOCITY ? MAX_VELOCITY : motor_speed[i];
+
+   // Debug center pixel HSV
+    int w = wb_camera_get_width(camera_rgb);
+    int h = wb_camera_get_height(camera_rgb);
+    const unsigned char *img = wb_camera_get_image(camera_rgb);
+
+    if (img && w > 0 && h > 0) {
+      int cx = w / 2;
+      int cy = h / 2;
+      unsigned char r = wb_camera_image_get_red(img, w, cx, cy);
+      unsigned char g = wb_camera_image_get_green(img, w, cx, cy);
+      unsigned char b = wb_camera_image_get_blue(img, w, cx, cy);
+
+      float h_val, s_val, v_val;
+      rgb_to_hsv(r, g, b, &h_val, &s_val, &v_val);
+
+      printf("Center pixel HSV = H: %.1f  S: %.2f  V: %.2f\n",
+             h_val, s_val, v_val);
     }
 
-    /* set speed values */
-    wb_motor_set_velocity(front_left_motor, motor_speed[0]);
-    wb_motor_set_velocity(front_right_motor, motor_speed[1]);
-    wb_motor_set_velocity(rear_left_motor, motor_speed[0]);
-    wb_motor_set_velocity(rear_right_motor, motor_speed[1]);
+    bool user_detected = is_user_in_view(camera_rgb);
+
+    if (user_detected) {
+      printf("User detected -> moving\n");
+
+      // Simple forward movement for now
+      wb_motor_set_velocity(front_left_motor, 2.0);
+      wb_motor_set_velocity(front_right_motor, 2.0);
+      wb_motor_set_velocity(rear_left_motor, 2.0);
+      wb_motor_set_velocity(rear_right_motor, 2.0);
+
+    } else {
+      printf("No user detected -> stopping\n");
+
+      wb_motor_set_velocity(front_left_motor, 0);
+      wb_motor_set_velocity(front_right_motor, 0);
+      wb_motor_set_velocity(rear_left_motor, 0);
+      wb_motor_set_velocity(rear_right_motor, 0);
+    }
+    
+    // /* compute motors speed */
+    // for (i = 0; i < 2; ++i) {
+    //   avoidance_speed[i] = 0.0;
+    //   for (j = 1; j < 3; ++j)
+    //     avoidance_speed[i] += (2.0 - distance_sensors_value[j]) * (2.0 - distance_sensors_value[j]) * coefficients[i][j - 1];
+    //   motor_speed[i] = base_speed + avoidance_speed[i];
+    //   motor_speed[i] = motor_speed[i] > MAX_VELOCITY ? MAX_VELOCITY : motor_speed[i];
+    // }
+
+    // /* set speed values */
+    // wb_motor_set_velocity(front_left_motor, motor_speed[0]);
+    // wb_motor_set_velocity(front_right_motor, motor_speed[1]);
+    // wb_motor_set_velocity(rear_left_motor, motor_speed[0]);
+    // wb_motor_set_velocity(rear_right_motor, motor_speed[1]);
   }
 
   wb_robot_cleanup();
