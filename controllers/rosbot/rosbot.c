@@ -74,38 +74,53 @@ void rgb_to_hsv(unsigned char r, unsigned char g, unsigned char b,
     *h += 360;
 }
 
-bool is_user_in_view(WbDeviceTag camera) {
-  int width = wb_camera_get_width(camera);
-  int height = wb_camera_get_height(camera);
-  const unsigned char *image = wb_camera_get_image(camera);
+bool bound_box(WbDeviceTag camera_rgb,
+                             int *min_x, int *min_y,
+                             int *max_x, int *max_y,
+                             int *pixel_count)
+{
+  int w = wb_camera_get_width(camera_rgb);
+  int h = wb_camera_get_height(camera_rgb);
+  const unsigned char *img = wb_camera_get_image(camera_rgb);
 
-  if (!image)
-    return false;
+  if (!img) return false;
 
-  int match_count = 0;
+  *min_x = w; *min_y = h;
+  *max_x = 0; *max_y = 0;
+  *pixel_count = 0;
 
-  for (int y = 0; y < height; y += 2) {
-    for (int x = 0; x < width; x += 2) {
-      unsigned char r = wb_camera_image_get_red(image, width, x, y);
-      unsigned char g = wb_camera_image_get_green(image, width, x, y);
-      unsigned char b = wb_camera_image_get_blue(image, width, x, y);
+  for (int y = 0; y < h; y++) {
+    for (int x = 0; x < w; x++) {
 
-      float h, s, v;
-      rgb_to_hsv(r, g, b, &h, &s, &v);
+      unsigned char r = wb_camera_image_get_red(img, w, x, y);
+      unsigned char g = wb_camera_image_get_green(img, w, x, y);
+      unsigned char b = wb_camera_image_get_blue(img, w, x, y);
 
-      bool is_green =
-        (h > 60 && h < 170) &&   // Green hue
-        (s > 0.35) &&            // Saturated
-        (v > 0.10);              // Allow shadows
+      float H, S, V;
+      rgb_to_hsv(r, g, b, &H, &S, &V);
 
-      if (is_green)
-        match_count++;
+      bool hsv_green =
+        (H > 50 && H < 150) &&
+        (S > 0.30) &&
+        (V > 0.25);
+
+      bool rgb_green =
+        (g > r + 40 && g > b + 40);
+
+      if (!(hsv_green || rgb_green))
+        continue;
+
+      if (x < *min_x) *min_x = x;
+      if (x > *max_x) *max_x = x;
+      if (y < *min_y) *min_y = y;
+      if (y > *max_y) *max_y = y;
+
+      (*pixel_count)++;
     }
   }
 
-  printf("HSV match_count = %d\n", match_count);
+  return (*pixel_count > 100);  // must detect enough pixels
 
-  return match_count > 40;
 }
 
 int main(int argc, char *argv[]) {
@@ -198,59 +213,123 @@ int main(int argc, char *argv[]) {
       distance_sensors_value[i] = wb_distance_sensor_get_value(distance_sensors[i]);
 
 
-   // Debug center pixel HSV
-    int w = wb_camera_get_width(camera_rgb);
-    int h = wb_camera_get_height(camera_rgb);
-    const unsigned char *img = wb_camera_get_image(camera_rgb);
+    int min_x, min_y, max_x, max_y, green_pixels;
 
-    if (img && w > 0 && h > 0) {
-      int cx = w / 2;
-      int cy = h / 2;
-      unsigned char r = wb_camera_image_get_red(img, w, cx, cy);
-      unsigned char g = wb_camera_image_get_green(img, w, cx, cy);
-      unsigned char b = wb_camera_image_get_blue(img, w, cx, cy);
+    bool found = bound_box(camera_rgb,
+                                 &min_x, &min_y,
+                                 &max_x, &max_y,
+                                 &green_pixels);
 
-      float h_val, s_val, v_val;
-      rgb_to_hsv(r, g, b, &h_val, &s_val, &v_val);
+    printf("\nGreen pixels = %d\n", green_pixels);
 
-      printf("Center pixel HSV = H: %.1f  S: %.2f  V: %.2f\n",
-             h_val, s_val, v_val);
-    }
-
-    bool user_detected = is_user_in_view(camera_rgb);
-
-    if (user_detected) {
-      printf("User detected -> moving\n");
-
-      // Simple forward movement for now
-      wb_motor_set_velocity(front_left_motor, 2.0);
-      wb_motor_set_velocity(front_right_motor, 2.0);
-      wb_motor_set_velocity(rear_left_motor, 2.0);
-      wb_motor_set_velocity(rear_right_motor, 2.0);
-
-    } else {
-      printf("No user detected -> stopping\n");
+    if (!found) {
+      printf("No user detected.\n");
 
       wb_motor_set_velocity(front_left_motor, 0);
       wb_motor_set_velocity(front_right_motor, 0);
       wb_motor_set_velocity(rear_left_motor, 0);
       wb_motor_set_velocity(rear_right_motor, 0);
+      continue;
     }
-    
-    // /* compute motors speed */
-    // for (i = 0; i < 2; ++i) {
-    //   avoidance_speed[i] = 0.0;
-    //   for (j = 1; j < 3; ++j)
-    //     avoidance_speed[i] += (2.0 - distance_sensors_value[j]) * (2.0 - distance_sensors_value[j]) * coefficients[i][j - 1];
-    //   motor_speed[i] = base_speed + avoidance_speed[i];
-    //   motor_speed[i] = motor_speed[i] > MAX_VELOCITY ? MAX_VELOCITY : motor_speed[i];
-    // }
 
-    // /* set speed values */
-    // wb_motor_set_velocity(front_left_motor, motor_speed[0]);
-    // wb_motor_set_velocity(front_right_motor, motor_speed[1]);
-    // wb_motor_set_velocity(rear_left_motor, motor_speed[0]);
-    // wb_motor_set_velocity(rear_right_motor, motor_speed[1]);
+    printf("User BOX = (%d,%d) to (%d,%d)\n",
+           min_x, min_y, max_x, max_y);
+
+
+    // ---- Compute bounding box center ----
+    int cx = (min_x + max_x) / 2;
+    int cy = (min_y + max_y) / 2;
+    printf("User center pixel = (%d, %d)\n", cx, cy);
+
+
+    // ---- Depth lookup at bounding box center ----
+    int w = wb_camera_get_width(camera_rgb);
+    int h = wb_camera_get_height(camera_rgb);
+
+    int dw = wb_range_finder_get_width(camera_depth);
+    int dh = wb_range_finder_get_height(camera_depth);
+    const float *depth_img = wb_range_finder_get_range_image(camera_depth);
+
+    int dx = (cx * dw) / w;
+    int dy = (cy * dh) / h;
+
+    float user_distance = depth_img[dy * dw + dx];
+
+    printf("User distance = %.3f m\n", user_distance);
+
+    if (isinf(user_distance) || user_distance < 0.6) {
+    // too close → depth fails
+    printf("User too close for depth! Using fallback (0.3 m).\n");
+    user_distance = 0.3; // treat as close
+    }
+
+    // -------- FOLLOWING BEHAVIOR --------
+    float forward = 0;
+
+    float d_close = 0.25;
+    float d_far = 3.0;
+
+    float min_spd = 0.5;
+    float max_spd = 3.0;
+
+    if (user_distance < d_close)
+      forward = max_spd;
+    else if (user_distance > d_far)
+      forward = 0;
+    else {
+      float ratio = 1.0 - ((user_distance - d_close) /
+                           (d_far - d_close));
+      forward = min_spd + ratio * (max_spd - min_spd);
+    }
+
+    printf("Forward speed = %.2f\n", forward);
+
+    // -------- OBSTACLE AVOIDANCE (LIDAR) --------
+    float left = forward;
+    float right = forward;
+
+    int lw = wb_lidar_get_horizontal_resolution(lidar);
+    const float *lv = wb_lidar_get_range_image(lidar);
+
+    int mid = lw / 2;
+    int li = mid - 20; if (li < 0) li = 0;
+    int ri = mid + 20; if (ri >= lw) ri = lw - 1;
+
+    float L = lv[li];
+    float C = lv[mid];
+    float R = lv[ri];
+
+    printf("Lidar L=%.2f C=%.2f R=%.2f\n", L, C, R);
+
+    if (forward > 0) {
+      if (C < 0.4) {
+        printf("Obstacle ahead → rotate\n");
+        left = 2.5;
+        right = -2.5;
+      }
+      else if (L < 0.3) {
+        printf("Obstacle left → turn right\n");
+        left = 2.5;
+        right = 0.5;
+      }
+      else if (R < 0.3) {
+        printf("Obstacle right → turn left\n");
+        left = 0.5;
+        right = 2.5;
+      }
+    }
+
+    // Motor clamp
+    if (left > MAX_VELOCITY) left = MAX_VELOCITY;
+    if (right > MAX_VELOCITY) right = MAX_VELOCITY;
+    if (left < -MAX_VELOCITY) left = -MAX_VELOCITY;
+    if (right < -MAX_VELOCITY) right = -MAX_VELOCITY;
+
+    wb_motor_set_velocity(front_left_motor, left);
+    wb_motor_set_velocity(rear_left_motor, left);
+    wb_motor_set_velocity(front_right_motor, right);
+    wb_motor_set_velocity(rear_right_motor, right);
+
   }
 
   wb_robot_cleanup();
