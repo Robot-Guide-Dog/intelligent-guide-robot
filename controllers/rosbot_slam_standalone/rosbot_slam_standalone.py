@@ -268,6 +268,7 @@ class RosbotSlamController:
         self.robot_orientation = 0.0
         self.last_time = self.robot.getTime()
         self.last_odom_pose = [0.0, 0.0, 0.0]  # For motion model
+        self.robot_node = self.robot.getSelf()  # For on-screen overlay
         
         # Robot parameters
         self.wheel_radius = 0.05
@@ -384,6 +385,20 @@ class RosbotSlamController:
         
         # Return motion for particle filter
         return dx, dy, dtheta
+
+    def update_overlay(self, step_count, odom_pose, slam_pose):
+        """Draw a small on-screen overlay with odom / SLAM pose."""
+        if not self.robot_node:
+            return
+        ox, oy, otheta = odom_pose
+        sx, sy, stheta = slam_pose
+        label = (
+            f"Step {step_count}\\n"
+            f"Odom: {ox:.2f}, {oy:.2f}, {math.degrees(otheta):.1f}°\\n"
+            f"SLAM: {sx:.2f}, {sy:.2f}, {math.degrees(stheta):.1f}°"
+        )
+        # Arguments: text, x, y, size, color (0xRRGGBB), transparency, font
+        self.robot_node.setLabel(label, 0.01, 0.01, 0.08, 0x00FF66, 0.2, "Arial")
     
     def process_lidar(self):
         """Process lidar data for SLAM"""
@@ -576,6 +591,15 @@ class RosbotSlamController:
                 print(f"  Odometry: x={odom_x:.2f}m, y={odom_y:.2f}m, θ={math.degrees(odom_theta):.1f}°")
                 print(f"  SLAM Est: x={slam_x:.2f}m, y={slam_y:.2f}m, θ={math.degrees(slam_theta):.1f}°")
                 print(f"  Motors: L={motor_speeds[0]:.2f} R={motor_speeds[1]:.2f}{obstacle_info}")
+            
+            # Lightweight overlay update
+            if step_count % 5 == 0:
+                slam_x, slam_y, slam_theta = self.slam.get_best_estimate()
+                self.update_overlay(
+                    step_count,
+                    (self.robot_position[0], self.robot_position[1], self.robot_orientation),
+                    (slam_x, slam_y, slam_theta),
+                )
             
             # Save map periodically
             if step_count % 1000 == 0 and step_count > 0:
