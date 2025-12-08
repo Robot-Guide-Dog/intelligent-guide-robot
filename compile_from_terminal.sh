@@ -68,3 +68,8 @@ echo "=== Compilation complete! ==="
 echo ""
 echo "Both controllers have been compiled as universal binaries (x86_64 + arm64)"
 echo "They should now work in Webots!"
+
+
+
+
+

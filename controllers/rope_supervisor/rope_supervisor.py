@@ -10,9 +10,9 @@ timestep = int(SUP.getBasicTimeStep())
 
 # Configuration (tweak these)
 ROPE_REST_LENGTH = 0.6   # desired slack length (m); if robots further, spring pulls
-K = 80.0                 # spring constant
-C = 10.0                 # damping coefficient
-MAX_FORCE = 100.0        # clamp the applied force magnitude
+K = 20.0                 # spring constant (reduced for softer rope)
+C = 5.0                  # damping coefficient (reduced)
+MAX_FORCE = 20.0         # clamp the applied force magnitude (reduced so Rosbot doesn't overpower)
 
 # look up nodes by DEF (you added these)
 ros_node = SUP.getFromDef('ROSBOT')

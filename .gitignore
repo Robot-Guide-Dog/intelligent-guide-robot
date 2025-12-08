@@ -29,3 +29,10 @@ __pycache__/
 # OS files
 .DS_Store
 Thumbs.db
+
+# SLAM generated map files (can be regenerated)
+controllers/*/slam_map_*.json
+controllers/*/slam_map_final.json
+
+
+
