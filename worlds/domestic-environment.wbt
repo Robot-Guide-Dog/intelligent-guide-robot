@@ -263,6 +263,7 @@ Door {
   doorHandle NULL
 }
 DEF ROSBOT Rosbot {
+  supervisor TRUE
   hidden position_0_0 3831.889672066796
   hidden position_0_1 3164.245928730417
   hidden position_0_2 3831.773427443433

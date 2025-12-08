@@ -269,7 +269,8 @@ class RosbotSlamController:
         self.robot_orientation = 0.0
         self.last_time = self.robot.getTime()
         self.last_odom_pose = [0.0, 0.0, 0.0]  # For motion model
-        self.robot_node = self.robot.getSelf()  # For on-screen overlay
+        # Overlay support (requires setLabel on Robot)
+        self.label_supported = hasattr(self.robot, "setLabel")
         
         # Robot parameters
         self.wheel_radius = 0.05
@@ -389,7 +390,7 @@ class RosbotSlamController:
 
     def update_overlay(self, step_count, odom_pose, slam_pose):
         """Draw a small on-screen overlay with odom / SLAM pose."""
-        if not self.robot_node:
+        if not self.label_supported:
             return
         ox, oy, otheta = odom_pose
         sx, sy, stheta = slam_pose
@@ -399,7 +400,8 @@ class RosbotSlamController:
             f"SLAM: {sx:.2f}, {sy:.2f}, {math.degrees(stheta):.1f}°"
         )
         # Arguments: text, x, y, size, color (0xRRGGBB), transparency, font
-        self.robot_node.setLabel(label, 0.01, 0.01, 0.08, 0x00FF66, 0.2, "Arial")
+        # Position near top-left; tweak size and alpha if needed.
+        self.robot.setLabel(label, 0.01, 0.01, 0.08, 0x00FF66, 0.2, "Arial")
     
     def process_lidar(self):
         """Process lidar data for SLAM"""
