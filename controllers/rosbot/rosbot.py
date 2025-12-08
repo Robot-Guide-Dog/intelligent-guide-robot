@@ -279,13 +279,37 @@ class RosbotSlamController:
         self.rear_right_motor = self.robot.getDevice("rr_wheel_joint")
 
         self.camera_rgb = self.robot.getDevice("camera rgb")
-        self.camera_depth = self.robot.getDevice("camera depth")
+        # The depth camera from Astra is a RangeFinder device, not a Camera
+        self.range_finder = self.robot.getDevice("camera depth")
+        # Keep camera_depth for backward compatibility in get_user_depth
+        self.camera_depth = self.range_finder
 
         if self.camera_rgb:
             self.camera_rgb.enable(self.time_step)
 
-        if self.camera_depth:
-            self.camera_depth.enable(self.time_step)
+        if self.range_finder:
+            self.range_finder.enable(self.time_step)
+            # Verify the device supports RangeFinder methods
+            if hasattr(self.range_finder, 'getRangeImage'):
+                print(f"Range finder enabled: {self.range_finder.getWidth()}x{self.range_finder.getHeight()}, "
+                      f"Range: {self.range_finder.getMinRange():.2f}-{self.range_finder.getMaxRange():.2f}m")
+            else:
+                print("Warning: Device 'camera depth' does not support getRangeImage() - may not be a RangeFinder")
+                self.range_finder = None
+        else:
+            print("Warning: Range finder 'camera depth' not found")
+            # Try alternative names
+            alt_names = ["camera_depth", "depth", "range_finder"]
+            for alt_name in alt_names:
+                alt_device = self.robot.getDevice(alt_name)
+                if alt_device and hasattr(alt_device, 'getRangeImage'):
+                    self.range_finder = alt_device
+                    self.range_finder.enable(self.time_step)
+                    self.camera_depth = self.range_finder
+                    print(f"Found range finder with alternative name: '{alt_name}'")
+                    print(f"Range finder enabled: {self.range_finder.getWidth()}x{self.range_finder.getHeight()}, "
+                          f"Range: {self.range_finder.getMinRange():.2f}-{self.range_finder.getMaxRange():.2f}m")
+                    break
 
         for motor in [
             self.front_left_motor,
@@ -604,41 +628,66 @@ class RosbotSlamController:
     
     def get_user_depth(self, cx, cy):
         """
-        Sample depth at the bounding box centre.
+        Sample depth at the bounding box centre and nearby points for robustness.
         Returns distance in meters or None if invalid.
         """
-        depth_cam = self.camera_depth
+        range_finder = self.range_finder
         rgb_cam = self.camera_rgb
-        if depth_cam is None or rgb_cam is None:
+        if range_finder is None or rgb_cam is None:
             return None
 
         w = rgb_cam.getWidth()
         h = rgb_cam.getHeight()
 
-        dw = depth_cam.getWidth()
-        dh = depth_cam.getHeight()
-        depth_img = depth_cam.getRangeImage()
-        if depth_img is None:
+        dw = range_finder.getWidth()
+        dh = range_finder.getHeight()
+        
+        try:
+            depth_img = range_finder.getRangeImage()
+        except Exception as e:
+            # RangeFinder might not be ready yet or method not available
+            return None
+            
+        if depth_img is None or len(depth_img) == 0:
             return None
 
         # Map RGB → depth coordinates
         dx = int(cx * dw / w)
         dy = int(cy * dh / h)
 
-        # Clamp to valid range
-        dx = max(0, min(dx, dw - 1))
-        dy = max(0, min(dy, dh - 1))
+        # Sample a small region around the center point for robustness
+        sample_radius = 2
+        valid_depths = []
+        
+        for offset_y in range(-sample_radius, sample_radius + 1):
+            for offset_x in range(-sample_radius, sample_radius + 1):
+                sample_x = dx + offset_x
+                sample_y = dy + offset_y
+                
+                # Clamp to valid range
+                sample_x = max(0, min(sample_x, dw - 1))
+                sample_y = max(0, min(sample_y, dh - 1))
 
-        depth = depth_img[dy * dw + dx]
+                # RangeFinder returns a 1D array, index is y * width + x
+                idx = sample_y * dw + sample_x
+                if idx >= len(depth_img):
+                    continue
+                    
+                depth = depth_img[idx]
 
-        if math.isinf(depth) or math.isnan(depth):
+                # Filter out invalid values
+                if (not math.isinf(depth) and not math.isnan(depth) and 
+                    depth > 0.05 and depth < range_finder.getMaxRange()):
+                    valid_depths.append(depth)
+        
+        if len(valid_depths) == 0:
             return None
-
-        # Approximate Astra blind zone as <0.05m
-        if depth < 0.05:
-            return 0.3  # treat as very close
-
-        return depth
+        
+        # Return median depth for robustness against outliers
+        valid_depths.sort()
+        median_depth = valid_depths[len(valid_depths) // 2]
+        
+        return median_depth
     
     def detect_user(self):
         """
