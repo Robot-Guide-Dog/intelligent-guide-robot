@@ -337,6 +337,16 @@ class RosbotSlamController:
             if ds:
                 ds.enable(self.time_step)
 
+        self.display = self.robot.getDevice("slam_display")
+
+        if self.display:
+            self.display_width = self.display.getWidth()
+            self.display_height = self.display.getHeight()
+            print("SLAM display enabled:", self.display_width, "x", self.display_height)
+        else:
+            print("No display found")
+
+
     def compute_odometry(self):
         """Compute odometry from wheel encoders."""
         fl_pos = self.front_left_ps.getValue() if self.front_left_ps else 0.0
@@ -511,13 +521,250 @@ class RosbotSlamController:
         if self.rear_right_motor:
             self.rear_right_motor.setVelocity(right_speed)
 
+    # COLOR + DEPTH DETECTION
+
+    @staticmethod
+    def rgb_to_hsv(r, g, b):
+        """Convert RGB to HSV (float H in [0,360), S,V in [0,1])."""
+        rf = r / 255.0
+        gf = g / 255.0
+        bf = b / 255.0
+
+        maxi = max(rf, gf, bf)
+        mini = min(rf, gf, bf)
+        delta = maxi - mini
+
+        v = maxi
+        s = 0 if maxi == 0 else delta / maxi
+
+        if delta == 0:
+            h = 0
+        elif maxi == rf:
+            h = (60 * ((gf - bf) / delta)) % 360
+        elif maxi == gf:
+            h = 60 * (((bf - rf) / delta) + 2)
+        else:
+            h = 60 * (((rf - gf) / delta) + 4)
+
+        return h, s, v
+    
+    def find_green_bbox(self):
+        """
+        Scan RGB image and return bounding box around green user:
+        (min_x, min_y, max_x, max_y, pixel_count) or None if not found.
+        """
+        cam = self.camera_rgb
+        if cam is None:
+            return None
+
+        w = cam.getWidth()
+        h = cam.getHeight()
+        img = cam.getImage()
+        if img is None:
+            return None
+
+        min_x, min_y = w, h
+        max_x, max_y = 0, 0
+        pixel_count = 0
+
+        # Step by 2 for speed
+        for y in range(0, h, 2):
+            for x in range(0, w, 2):
+                r = cam.imageGetRed(img, w, x, y)
+                g = cam.imageGetGreen(img, w, x, y)
+                b = cam.imageGetBlue(img, w, x, y)
+
+                H, S, V = self.rgb_to_hsv(r, g, b)
+
+                hsv_green = (50 < H < 150) and (S > 0.30) and (V > 0.25)
+                rgb_green = (g > r + 40 and g > b + 40)
+
+                if not (hsv_green or rgb_green):
+                    continue
+
+                if x < min_x: min_x = x
+                if x > max_x: max_x = x
+                if y < min_y: min_y = y
+                if y > max_y: max_y = y
+                pixel_count += 1
+
+        if pixel_count < 100:
+            return None
+
+        return min_x, min_y, max_x, max_y, pixel_count
+    
+    def get_user_depth(self, cx, cy):
+        """
+        Sample depth at the bounding box centre.
+        Returns distance in meters or None if invalid.
+        """
+        depth_cam = self.camera_depth
+        rgb_cam = self.camera_rgb
+        if depth_cam is None or rgb_cam is None:
+            return None
+
+        w = rgb_cam.getWidth()
+        h = rgb_cam.getHeight()
+
+        dw = depth_cam.getWidth()
+        dh = depth_cam.getHeight()
+        depth_img = depth_cam.getRangeImage()
+        if depth_img is None:
+            return None
+
+        # Map RGB → depth coordinates
+        dx = int(cx * dw / w)
+        dy = int(cy * dh / h)
+
+        # Clamp to valid range
+        dx = max(0, min(dx, dw - 1))
+        dy = max(0, min(dy, dh - 1))
+
+        depth = depth_img[dy * dw + dx]
+
+        if math.isinf(depth) or math.isnan(depth):
+            return None
+
+        # Approximate Astra blind zone as <0.05m
+        if depth < 0.05:
+            return 0.3  # treat as very close
+
+        return depth
+    
+    def detect_user(self):
+        """
+        Detect green user and estimate distance.
+
+        Returns:
+            (cx, cy, distance) or (None, None, None) if no user.
+        """
+        bbox = self.find_green_bbox()
+        if bbox is None:
+            return None, None, None
+
+        min_x, min_y, max_x, max_y, pixels = bbox
+        cx = (min_x + max_x) // 2
+        cy = (min_y + max_y) // 2
+
+        dist = self.get_user_depth(cx, cy)
+        return cx, cy, dist
+
+    def compute_follow_speed(self, user_distance):
+        """
+        Depth-based forward speed.
+        """
+        if user_distance is None:
+            return 0.0
+
+        d_close = 0.25
+        d_far = 3.0
+        min_spd = 0.5
+        max_spd = 3.0
+
+        if user_distance < d_close:
+            forward = max_spd
+        elif user_distance > d_far:
+            forward = 0.0
+        else:
+            ratio = 1.0 - ((user_distance - d_close) / (d_far - d_close))
+            forward = min_spd + ratio * (max_spd - min_spd)
+
+        return forward
+
+    def compute_follow_motor_speeds(self, forward):
+        """
+        Lidar-based obstacle avoidance + user-following forward speed.
+        """
+        left = forward
+        right = forward
+
+        if forward <= 0 or not self.lidar:
+            return left, right
+
+        front_obstacle_dist, front_obstacle_angle = self.detect_front_obstacle()
+
+        if front_obstacle_dist is None:
+            return left, right
+
+        if front_obstacle_dist < 0.4:
+            print("Obstacle very close → rotate")
+            left = 2.5
+            right = -2.5
+        elif front_obstacle_dist < 0.3:
+            if front_obstacle_angle > 0:
+                print("Obstacle left → turn right")
+                left = 2.5
+                right = 0.5
+            else:
+                print("Obstacle right → turn left")
+                left = 0.5
+                right = 2.5
+
+        # Clamp
+        left = max(-self.max_velocity, min(left, self.max_velocity))
+        right = max(-self.max_velocity, min(right, self.max_velocity))
+        return left, right
+    
+    # DRAW SLAM MAP
+
+    def draw_slam_map(self):
+        if not self.display:
+            return
+        
+        print("Drawing map…")
+
+        grid = self.slam.occupancy_grid
+        size = self.slam.map_size
+
+        # Clear the display
+        self.display.setColor(0xFFFFFF)  # white
+        self.display.fillRectangle(0, 0, self.display_width, self.display_height)
+
+        cell_w = self.display_width / size
+        cell_h = self.display_height / size
+
+        # Draw occupancy grid
+        for y in range(size):
+            for x in range(size):
+                v = grid[y][x]
+                if v == -1:
+                    self.display.setColor(0xAAAAAA)  # unknown = gray
+                elif v == 0:
+                    self.display.setColor(0xFFFFFF)  # free = white
+                else:
+                    self.display.setColor(0x000000)  # occupied = black
+
+                px = int(x * cell_w)
+                py = int(y * cell_h)
+                self.display.fillRectangle(px, py, int(cell_w), int(cell_h))
+
+        # Draw robot position
+        rx, ry, rtheta = self.slam.get_best_estimate()
+
+        gx = int((rx / self.slam.resolution + self.slam.map_center[0]) * cell_w)
+        gy = int((ry / self.slam.resolution + self.slam.map_center[1]) * cell_h)
+
+        self.display.setColor(0xFF0000)  # robot = red
+        self.display.fillOval(gx - 3, gy - 3, 6, 6)
+
+        # Draw heading arrow
+        arrow_length = 12
+        hx = gx + arrow_length * math.cos(rtheta)
+        hy = gy + arrow_length * math.sin(rtheta)
+
+        self.display.setColor(0xFF0000)
+        self.display.drawLine(gx, gy, int(hx), int(hy))
+
+    
+    # MAIN LOOP
+
     def run(self):
         """Main control loop."""
         step_count = 0
         resample_counter = 0
 
         print("=" * 50)
-        print("Starting SLAM Controller with Particle Filter...")
+        print("Starting SLAM + Vision Controller with Particle Filter...")
         print(f"Lidar: {'Enabled' if self.lidar else 'Not found'}")
         if self.lidar:
             print(f"Lidar FOV: {math.degrees(self.lidar_fov):.1f}°")
@@ -526,11 +773,28 @@ class RosbotSlamController:
         print("=" * 50)
 
         while self.robot.step(self.time_step) != -1:
-            motor_speeds = self.compute_motor_speeds()
-            self.set_motor_velocities(motor_speeds[0], motor_speeds[1])
+            # 1) Decide behaviour: follow user if visible, else pure SLAM-avoidance
+            cx, cy, user_distance = (None, None, None)
+            if self.camera_rgb and self.camera_depth:
+                cx, cy, user_distance = self.detect_user()
 
+            if cx is not None:
+                # User detected
+                print(f"User detected at ({cx},{cy}), depth={user_distance}")
+                forward = self.compute_follow_speed(user_distance)
+                left_speed, right_speed = self.compute_follow_motor_speeds(forward)
+            else:
+                # No user → pure obstacle avoidance based on lidar
+                left_speed, right_speed = self.compute_motor_speeds()
+
+            self.set_motor_velocities(left_speed, right_speed)
+
+            # 2) SLAM update (odometry + lidar)
             dx, dy, dtheta = self.compute_odometry()
             self.slam.predict(dx, dy, dtheta)
+
+            if step_count % 3 == 0:      # update map ~10 times/sec
+                self.draw_slam_map()
 
             if step_count % 5 == 0:
                 self.process_lidar()
@@ -539,6 +803,7 @@ class RosbotSlamController:
                     self.slam.resample()
                     resample_counter = 0
 
+            # 3) Debug + overlay
             if step_count % 100 == 0:
                 slam_x, slam_y, slam_theta = self.slam.get_best_estimate()
                 odom_x, odom_y = self.robot_position[0], self.robot_position[1]
@@ -563,7 +828,7 @@ class RosbotSlamController:
                     f"θ={math.degrees(slam_theta):.1f}°"
                 )
                 print(
-                    f"  Motors: L={motor_speeds[0]:.2f} R={motor_speeds[1]:.2f}"
+                    f"  Motors: L={left_speed:.2f} R={right_speed:.2f}"
                     f"{obstacle_info}"
                 )
 
