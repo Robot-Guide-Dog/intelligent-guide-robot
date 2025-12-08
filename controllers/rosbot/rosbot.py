@@ -278,6 +278,15 @@ class RosbotSlamController:
         self.rear_left_motor = self.robot.getDevice("rl_wheel_joint")
         self.rear_right_motor = self.robot.getDevice("rr_wheel_joint")
 
+        self.camera_rgb = self.robot.getDevice("camera rgb")
+        self.camera_depth = self.robot.getDevice("camera depth")
+
+        if self.camera_rgb:
+            self.camera_rgb.enable(self.time_step)
+
+        if self.camera_depth:
+            self.camera_depth.enable(self.time_step)
+
         for motor in [
             self.front_left_motor,
             self.front_right_motor,
