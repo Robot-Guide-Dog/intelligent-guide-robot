@@ -1,0 +1,85 @@
+slam_toolbox:
+  ros__parameters:
+    # General Parameters
+    odom_frame: odom
+    map_frame: map
+    base_frame: base_link
+    scan_topic: /scan
+    use_map_saver: true
+    mode: mapping  # or localization
+    
+    # Resolution
+    resolution: 0.05
+    
+    # Map Update Parameters
+    max_laser_range: 20.0
+    minimum_time_interval: 0.5
+    transform_publish_period: 0.02
+    
+    # Scan Matcher Parameters
+    scan_buffer_size: 10
+    scan_buffer_maximum_scan_distance: 10.0
+    link_match_minimum_response_fine: 0.1
+    link_scan_maximum_distance: 1.5
+    loop_search_maximum_distance: 3.0
+    do_loop_closing: true
+    loop_match_minimum_chain_size: 10
+    loop_match_maximum_variance_coarse: 3.0
+    loop_match_minimum_response_coarse: 0.35
+    loop_match_minimum_response_fine: 0.45
+    
+    # Correlation Parameters
+    correlation_search_space_dimension: 0.5
+    correlation_search_space_resolution: 0.01
+    correlation_search_space_smear_deviation: 0.1
+    
+    # Resolution Parameters
+    fine_search_angle_offset: 0.00349
+    coarse_search_angle_offset: 0.349
+    coarse_angle_resolution: 0.0349
+    minimum_angle_penalty: 0.9
+    minimum_distance_penalty: 0.5
+    use_response_expansion: true
+    
+    # Optimization Parameters
+    solver_name: solver2d
+    solver_iterations: 20
+    solver_restart: false
+    
+    # Scan Matcher Parameters
+    scan_matcher_type: scan_matcher
+    covariance_scale: 1.0
+    correlation_loop_space_dimension: 0.5
+    correlation_loop_space_resolution: 0.01
+    correlation_loop_space_smear_deviation: 0.1
+    
+    # Scan Buffer Parameters
+    scan_queue_size: 10
+    
+    # Loop Closure Parameters
+    loop_search_space_dimension: 8.0
+    distance_variance_penalty: 0.5
+    angle_variance_penalty: 1.0
+    
+    # Correlation Parameters
+    fine_search_angle_offset: 0.00349
+    coarse_search_angle_offset: 0.349
+    coarse_angle_resolution: 0.0349
+    minimum_angle_penalty: 0.9
+    minimum_distance_penalty: 0.5
+    use_response_expansion: true
+    
+    # Optimization Parameters
+    solver_name: solver2d
+    solver_iterations: 20
+    solver_restart: false
+    
+    # Scan Matcher Parameters
+    scan_matcher_type: scan_matcher
+    covariance_scale: 1.0
+    
+    # Debug Parameters
+    debug_mode: false
+
+
+
