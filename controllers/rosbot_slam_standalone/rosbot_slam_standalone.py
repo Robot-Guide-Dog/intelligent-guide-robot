@@ -154,7 +154,8 @@ class ParticleFilter:
         i = 0
         
         for _ in range(self.num_particles):
-            while u > c:
+            # Guard against running past the list if cumulative sum reached
+            while u > c and i < len(weights) - 1:
                 i += 1
                 c += weights[i]
             new_particles.append(self.particles[i].copy())
