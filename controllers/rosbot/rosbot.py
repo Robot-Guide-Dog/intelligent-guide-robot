@@ -465,61 +465,52 @@ class RosbotSlamController:
         return None, None
 
     def compute_motor_speeds(self):
-        """Compute motor speeds with obstacle avoidance."""
+        """
+        Basic obstacle avoidance + stuck recovery.
+        """
+
+        # 1. Check if robot is stuck against wall
+        if self.is_robot_stuck():
+            print("Robot stuck → reversing")
+
+            # strong reverse
+            left = -3.0
+            right = -3.0  
+            return left, right
+
+        # 2. Normal front obstacle detection
         front_obstacle_dist, front_obstacle_angle = self.detect_front_obstacle()
 
-        if front_obstacle_dist is not None and front_obstacle_dist < 0.25:
-            if front_obstacle_angle is not None:
-                backup_speed = -2.5
-                turn_speed = 2.0
-                if front_obstacle_angle > 0:
-                    return [
-                        backup_speed + turn_speed,
-                        backup_speed - turn_speed * 0.3,
-                    ]
-                return [
-                    backup_speed - turn_speed * 0.3,
-                    backup_speed + turn_speed,
-                ]
-            return [-2.5, -2.5]
+        # Too close? Back up + turn
+        if front_obstacle_dist is not None and front_obstacle_dist < 0.15:
+            backup_speed = -3.0
+            turn_speed = 2.0
 
-        if front_obstacle_dist is not None and front_obstacle_dist < 0.35:
-            if front_obstacle_angle is not None:
-                turn_speed = 3.0
-                if front_obstacle_angle > 0:
-                    return [turn_speed, -turn_speed * 0.1]
-                return [-turn_speed * 0.1, turn_speed]
-            return [0.0, 0.0]
+            if front_obstacle_angle > 0:
+                return backup_speed + turn_speed, backup_speed - turn_speed
+            else:
+                return backup_speed - turn_speed, backup_speed + turn_speed
 
-        base_speeds = [self.base_speed, self.base_speed]
+        # 3. Slight steering for moderate obstacles
+        base = self.base_speed
+        left = base
+        right = base
 
-        avoidance_speed = [0.0, 0.0]
         if front_obstacle_dist is not None and front_obstacle_angle is not None:
-            avoidance_strength = 8.0
             if front_obstacle_dist < 0.4:
-                factor = (0.4 - front_obstacle_dist) / 0.4
+                steer = (0.4 - front_obstacle_dist) * 5.0
                 if front_obstacle_angle > 0:
-                    avoidance_speed[0] += factor * avoidance_strength
-                    avoidance_speed[1] -= factor * avoidance_strength * 0.9
+                    left += steer
+                    right -= steer
                 else:
-                    avoidance_speed[0] -= factor * avoidance_strength * 0.9
-                    avoidance_speed[1] += factor * avoidance_strength
+                    left -= steer
+                    right += steer
 
-        if front_obstacle_dist is not None and front_obstacle_dist < 0.40:
-            motor_speed = [
-                base_speeds[0] * 0.1 + avoidance_speed[0] * 1.5,
-                base_speeds[1] * 0.1 + avoidance_speed[1] * 1.5,
-            ]
-        else:
-            motor_speed = [
-                base_speeds[0] + avoidance_speed[0] * 0.6,
-                base_speeds[1] + avoidance_speed[1] * 0.6,
-            ]
+        # clamp speeds
+        left = max(-self.max_velocity, min(left, self.max_velocity))
+        right = max(-self.max_velocity, min(right, self.max_velocity))
 
-        motor_speed[0] = max(-self.max_velocity, min(motor_speed[0], self.max_velocity))
-        motor_speed[1] = max(-self.max_velocity, min(motor_speed[1], self.max_velocity))
-
-        return motor_speed
+        return left, right
 
     def set_motor_velocities(self, left_speed, right_speed):
         """Set motor velocities."""
@@ -531,6 +522,19 @@ class RosbotSlamController:
             self.rear_left_motor.setVelocity(left_speed)
         if self.rear_right_motor:
             self.rear_right_motor.setVelocity(right_speed)
+
+    # STUCK DETECTOR
+    def is_robot_stuck(self):
+        """
+        Return True if robot is extremely close to a wall (lidar distance < 0.10 m)
+        """
+        front_dist, _ = self.detect_front_obstacle()
+
+        if front_dist is not None and front_dist < 0.10:
+            return True
+
+        return False
+
 
     # COLOR + DEPTH DETECTION
 
