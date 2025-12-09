@@ -18,8 +18,8 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/project
 WorldInfo {
 }
 Viewpoint {
-  orientation -0.49074515118346235 -0.6359891576463044 0.5955560325832197 4.456239638322783
-  position -0.71622772995225 0.8688642052931486 3.129511723631424
+  orientation 0.14801633106731654 -0.9699666764460596 -0.19301764769459764 4.94520267069397
+  position -2.5983780430335566 1.6976284095800094 3.0662625500467797
 }
 TexturedBackground {
 }
@@ -33,10 +33,10 @@ RectangleArena {
   wallHeight 1e-05
 }
 Wall {
-  translation 1.77446 -0.887128 1.16796e-13
+  translation 1.78782 -0.890565 1.16796e-13
   rotation 0 0 1 1.5708
   name "wall_bedroom_1"
-  size 0.05 1.2 0.5
+  size 0.05 1.18 0.5
 }
 Wall {
   translation -0.316693 -1.83323 1.09246e-13
@@ -45,16 +45,16 @@ Wall {
   size 0.05 1.3 0.5
 }
 Wall {
-  translation 0.769976 -0.89085 4.48527e-14
+  translation 0.756635 -0.889336 4.48527e-14
   rotation 0 0 1 1.5708
   name "wall_bedroom_1.2"
-  size 0.05 0.2 0.5
+  size 0.05 0.18 0.5
 }
 Wall {
-  translation 0.525241 -1.20734 3.99677e-14
+  translation 0.539791 -1.20376 4.04118e-14
   rotation 0 0 1 1.5708
   name "wall_bedroom_1.2(5)"
-  size 0.05 0.35 0.5
+  size 0.05 0.32 0.5
 }
 Wall {
   translation -0.137983 -1.20829 3.01978e-14
@@ -153,10 +153,10 @@ Wall {
   size 0.05 2.04 0.5
 }
 Wall {
-  translation 0.673573 -0.0170032 3.99677e-14
+  translation 0.672912 -0.0255084 3.99677e-14
   rotation 0 0 1 5.307156870259904e-06
   name "bedroom_2"
-  size 0.05 0.33 0.5
+  size 0.05 0.3 0.5
 }
 Wall {
   translation 0.671911 2.30369 2.08278e-13
@@ -168,7 +168,7 @@ Wall {
   translation 0.671948 1.1507 2.14051e-13
   rotation 0 0 -1 -5.307179586466759e-06
   name "bedroom_2.1(1)"
-  size 0.05 1.4 0.5
+  size 0.05 1.35 0.5
 }
 Wall {
   translation 1.53429 -0.155503 8.12683e-14
@@ -177,84 +177,13 @@ Wall {
   size 0.05 1.7 0.5
 }
 Door {
-  hidden translation_4 0.17547992239748011 -0.1243802308919203 2.6922908347160046e-15
-  hidden rotation_4 0 0 -1 1.5699951418811222
-  hidden linearVelocity_4 6.282288945911522e-10 -1.0874413585095542e-10 7.612082833443206e-17
-  hidden angularVelocity_4 -4.739661821871942e-16 5.204420884931669e-17 -4.201613729125778e-09
-  translation 1.02055 -0.891263 -1.9984e-14
-  rotation 9.58984e-09 9.58981e-09 1 1.57079
-  name "bedroom_1"
-  size 0.05 0.3 0.5
-  position -1.5699951418811222
-  frameHeight 0.5
-  frameSize 0.001 0.001 0.001
-  doorAppearance GenericDoorAppearance {
-    colorOverride 0.6 0.6 0.6
-  }
-  doorHandle NULL
-}
-Door {
-  hidden translation_4 -0.0004643895992690744 -0.00025226607034153914 2.1649348980190553e-15
-  hidden rotation_4 0 0 1 0.009803440861360717
-  hidden linearVelocity_4 1.3879643685668198e-15 3.4691394344034535e-16 -3.4254372750494444e-16
-  hidden angularVelocity_4 6.241304283749764e-20 -2.482710123230827e-17 1.241145819402334e-18
-  translation 0.672402 0.300079 -3.99679e-15
-  rotation 0 0 1 3.14159
-  name "bedroom_2_door"
-  size 0.05 0.3 0.5
-  position 0.009803440861349858
-  frameHeight 0.5
-  frameSize 0.001 0.001 0.001
-  doorAppearance GenericDoorAppearance {
-    colorOverride 0.6 0.6 0.6
-  }
-  doorHandle NULL
-}
-Door {
-  hidden translation_4 0.17547437454271078 -0.12437966176019394 -0.00015344694123919922
-  hidden rotation_4 -9.28298193319574e-06 1.3180421888157272e-05 -0.9999999998700513 1.5699978371087326
-  hidden linearVelocity_4 -1.3876274489835625e-15 1.3884666249940953e-15 -3.9237540378573246e-16
-  hidden angularVelocity_4 -5.4219052033394e-20 -1.993261001937668e-16 4.509192492335701e-18
-  translation 0.672279 1.99989 2.13163e-14
-  rotation 0 0 1 -5.307179586466759e-06
-  name "bedroom_2_door(1)"
-  size 0.05 0.3 0.5
-  position -1.5699964887174531
-  frameHeight 0.5
-  frameSize 0.001 0.001 0.001
-  mainMaterialDensity 194
-  doorAppearance GenericDoorAppearance {
-    colorOverride 0.6 0.6 0.6
-  }
-  doorHandle NULL
-}
-Door {
-  hidden translation_4 0.17270367068123463 -0.11137805082827074 7.771561172376096e-16
-  hidden rotation_4 0 0 -1 1.4822533646384475
-  hidden linearVelocity_4 6.940227113439908e-16 2.7755468175800103e-15 -2.283624850032963e-16
-  hidden angularVelocity_4 2.1023850220849683e-19 -9.28935230804829e-18 8.81531192641951e-19
+  hidden translation_4 0.0010311587987019005 4.461172384756518e-06 6.661338147750939e-16
+  hidden rotation_4 0 0 -1 0.00017855808716253795
   translation -0.577256 -2.49708 5.77316e-15
   rotation 0 0 1 -1.5707953071795862
   name "front door"
-  size 0.05 0.3 0.5
-  position -1.4822533646384475
-  frameHeight 0.5
-  frameSize 0.001 0.001 0.001
-  doorAppearance GenericDoorAppearance {
-    colorOverride 0.6 0.6 0.6
-  }
-  doorHandle NULL
-}
-Door {
-  hidden translation_4 0.1720190282337116 -0.10883437085593604 1.1657341758564144e-15
-  hidden rotation_4 0 0 -1 1.4648743505810582
-  hidden linearVelocity_4 -6.935777374824891e-16 -2.7755787591507367e-15 -3.806041416721605e-16
-  hidden angularVelocity_4 3.3159589694089126e-20 -1.2264674087390832e-18 -2.0587625699531617e-18
-  translation 0.186096 -1.20804 1.02141e-14
-  rotation 0 0 1 1.5708
-  name "front door(1)"
-  size 0.05 0.3 0.5
-  position -1.4648743505810584
+  size 0.05 0.35 0.5
+  position -1.4824461515736012
   frameHeight 0.5
   frameSize 0.001 0.001 0.001
   doorAppearance GenericDoorAppearance {
@@ -263,30 +192,30 @@ Door {
   doorHandle NULL
 }
 DEF ROSBOT Rosbot {
-  hidden position_0_0 5431.912706820401
-  hidden position_0_1 4315.700175082727
-  hidden position_0_2 5431.815461039449
-  hidden position_0_3 4316.471580863434
-  hidden linearVelocity_0 -0.02095172960546473 0.12742651331017882 -1.6502830499898513e-05
-  hidden angularVelocity_0 -0.001428549079570117 0.0002784989089076303 -0.0001273140387883396
-  hidden translation_2 0.050000138461972606 0.10998887327761908 0.042998559991524396
-  hidden rotation_2 1.4892502577587064e-06 0.99999999999878 4.71362311557766e-07 5.97672682098278
-  hidden linearVelocity_2 -0.020963204045867042 0.12734448847392751 -3.894395290444292e-05
-  hidden angularVelocity_2 -2.9612035145707933 -0.48842980650640794 -0.00015463130000565643
-  hidden translation_3 0.05000691276263403 -0.10998815521664151 0.04300845601987195
-  hidden rotation_3 1.5215977615833001e-06 0.9999999999988286 1.6663193366007136e-07 0.5978032579517862
-  hidden linearVelocity_3 -0.021031157414542125 0.12734443855207825 -0.00011964172024954924
-  hidden angularVelocity_3 -2.961206786997946 -0.48841538841101295 -0.00014528231374428673
-  hidden translation_4 -0.05500367984703727 0.10998878499938214 0.04299247728944248
-  hidden rotation_4 3.536196846036015e-07 0.9999999999999274 1.4213218793889466e-07 1.8145251646764062
-  hidden linearVelocity_4 -0.0209725648071373 0.12732442966194044 0.00011171385766436427
-  hidden angularVelocity_4 -2.961201788285971 -0.4884302554632851 -0.00015499719412143624
-  hidden translation_5 -0.05501361757090938 -0.10998950277197395 0.043004194362165044
-  hidden rotation_5 4.6314315354884845e-07 0.9999999999998878 9.936104592548398e-08 4.0967869949161795
-  hidden linearVelocity_5 -0.021127604020802482 0.12731363763881226 5.571777456293576e-05
-  hidden angularVelocity_5 -2.9612014128524704 -0.48843253282854415 -0.00011769063945039143
-  translation -0.6771707323619189 0.8158957697566622 -0.0005633515039948495
-  rotation 0.00013226560786902533 -0.00011784025117343594 0.999999984309742 1.734469519946484
+  hidden position_0_0 7602.870469349466
+  hidden position_0_1 5132.233890096213
+  hidden position_0_2 7602.773986531109
+  hidden position_0_3 5133.006070995416
+  hidden linearVelocity_0 0.03730302840391934 0.0323735388169751 -0.00011186318250745079
+  hidden angularVelocity_0 0.01190522716849227 -0.013112533714721175 0.4638056550588743
+  hidden translation_2 0.05000003092703951 0.10998887327761908 0.04300144631934439
+  hidden rotation_2 -5.876657582292462e-08 0.9999999999999712 2.3216753932996583e-07 2.952373065911098
+  hidden linearVelocity_2 -0.012102995665780783 0.01909293153176449 0.0008793117485316358
+  hidden angularVelocity_2 0.23712773068536785 -0.2132671056617741 0.4522735255504736
+  hidden translation_3 0.05000430291586217 -0.10998815521664151 0.04301003869883968
+  hidden rotation_3 2.76379508445945e-06 0.999999999995933 7.035462681545438e-07 0.3174283380927954
+  hidden linearVelocity_3 0.05367150290539299 0.08303731880738796 0.0009168425097831263
+  hidden angularVelocity_3 -2.052859277239045 2.163239491322595 0.45635011673748804
+  hidden translation_4 -0.05499546010797748 0.10998878499938214 0.04300703717477214
+  hidden rotation_4 -1.6776231740833423e-07 -0.9999999999998606 5.009114577696884e-07 1.209065627800561
+  hidden linearVelocity_4 0.021583676069402938 -0.01560910749273002 -0.00094303961362662
+  hidden angularVelocity_4 0.23713331356527556 -0.21326138334973033 0.45227109806426424
+  hidden translation_5 -0.05501424626797262 -0.10998950277197395 0.043000273423287196
+  hidden rotation_5 4.186695778922696e-07 0.9999999999999005 1.5336404134630644e-07 3.8171871935521082
+  hidden linearVelocity_5 0.08739808845585259 0.04829238076841112 -0.000854198288910688
+  hidden angularVelocity_5 -2.052853357182873 2.1632438797171227 0.4563517571356649
+  translation -1.600884084938826 2.163715206328331 -0.0005621127707383378
+  rotation 0.00020106055595876346 -0.0004901163986811615 0.9999998596802744 0.765236067410423
   supervisor TRUE
   cameraSlot [
     JetBotRaspberryPiCamera {
@@ -327,8 +256,8 @@ DEF ROSBOT Rosbot {
   ]
 }
 Solid {
-  translation 1.2487632634691284 -2.0206017257401827 0.07343154701158947
-  rotation 1.0652881827807116e-17 2.7473155428568117e-17 0.9999999999999999 1.5072336414146064
+  translation 1.2487632634691284 -2.0206017257401827 0.07343063721758848
+  rotation 8.026668473835901e-17 7.003407511501015e-17 0.9999999999999999 1.5072336414146064
   children [
     Solid {
       translation 0.07 0 0.1868
@@ -380,8 +309,8 @@ Solid {
   physics Physics {
     mass 4
   }
-  linearVelocity -7.256092426903481e-17 -1.29604024580464e-17 -9.050290166271954e-06
-  angularVelocity 9.760980136333598e-17 -8.518546554794253e-17 -1.933963482919572e-18
+  linearVelocity 2.861332461005213e-17 -7.694015185443218e-18 -1.8717230304908945e-06
+  angularVelocity 2.3767125762991025e-16 5.238055402578279e-16 -1.0214008338872058e-17
 }
 Solid {
   translation 1.20234 -2.02372 0.435236
@@ -401,8 +330,8 @@ Solid {
   name "tv_not_table"
 }
 Solid {
-  translation -1.2353463446280266 1.5727310775289365 0.04843154701158947
-  rotation 1.579025968907058e-17 1.375054358387891e-17 1 1.569312846324636
+  translation -1.2337959413427422 1.6007027845572137 0.04843063721758849
+  rotation -2.830766104390114e-17 -3.29495084189181e-17 1 1.5732015462995605
   children [
     Shape {
       appearance Appearance {
@@ -422,8 +351,8 @@ Solid {
   physics Physics {
     mass 4
   }
-  linearVelocity 2.3639146182218957e-17 6.271058231040786e-18 -9.050290166157945e-06
-  angularVelocity -1.1466671640404999e-16 3.96688163689136e-16 5.432099224163049e-18
+  linearVelocity -2.5517056719366997e-17 -1.0267627405336578e-17 -1.8717230306041159e-06
+  angularVelocity 5.882987521095919e-17 -5.353290745977159e-16 -9.67459965741897e-19
 }
 Solid {
   translation -1.27122 1.55603 0.314889
@@ -505,29 +434,29 @@ Window {
   windowSillSize 0.01 0.002
 }
 DEF TURTLE TurtleBot3Burger {
-  hidden position_0_0 11824.1991975106
-  hidden position_0_1 11792.1408101084
-  hidden position_0_2 2602.8807355756535
-  hidden position2_0_2 306.63766890046236
-  hidden position3_0_2 -9687.720713017425
-  hidden linearVelocity_0 -0.007982183564877331 0.051056566305958846 0.0013740896202356727
-  hidden angularVelocity_0 -0.02887088605224955 -0.0029583522122441485 -0.25313177621733013
-  hidden position_3_0 205896.47103978836
-  hidden position_3_1 379854.4486396947
-  hidden rotation_4 0.13114309323326817 -0.700998530335751 -0.7010011052518589 3.4023895771352097
-  hidden translation_5 -0.056553905656036726 -0.009999999999999929 0.044772927929759884
-  hidden rotation_5 -0.4884754758572059 -0.6170044216770917 -0.6170066880650433 2.2328244367664194
-  hidden rotation_10 0 -1 0 4.563868174329278
-  hidden linearVelocity_10 0.0001504136165541728 0.030205344500702436 0.0007066223850312177
-  hidden angularVelocity_10 -0.8466313871534189 0.004476241317370969 -0.2530935267866873
-  hidden rotation_11 0.752873110841531 -2.3215719311860595e-06 -0.6581656926385681 3.1415929652194627
-  hidden linearVelocity_11 0.0005536789662770223 0.07071034337295797 0.00016813476202991499
-  hidden angularVelocity_11 -2.2110042840808615 0.016878220578623787 -0.25420559596519654
-  hidden rotation_12 -0.08414086560357142 -0.538942860102426 0.8381294102226091 4.67247480970365
-  hidden linearVelocity_12 -0.02000824599874553 0.0498009856876236 0.002767160450534124
-  hidden angularVelocity_12 -12.450246420699798 -5.002061503057913 -0.004587974794273783
-  translation -0.6126943108170734 0.5869454892961066 -0.0003177825940980164
-  rotation 0.004097033144961205 -0.0038046082466868356 0.9999843695155931 1.5569851620619444
+  hidden position_0_0 13502.550319336342
+  hidden position_0_1 13638.329800792659
+  hidden position_0_2 895.6915612331736
+  hidden position2_0_2 342.17146800501894
+  hidden position3_0_2 -9243.408495473544
+  hidden linearVelocity_0 -0.045518556177439065 0.019435197737410915 1.8201459490003118e-06
+  hidden angularVelocity_0 0.0002377816001268622 4.610348867734685e-05 -0.004474253114399293
+  hidden position_3_0 223762.19391972857
+  hidden position_3_1 407800.0537593952
+  hidden rotation_4 0.8309200773942237 0.3934276857710771 0.3934291309143134 4.528213778920594
+  hidden translation_5 -0.08223149533762747 -0.009999999999999915 -0.028342172563151826
+  hidden rotation_5 0.23678351592983285 -0.6869971249293251 -0.6869996484153016 3.6065939338354185
+  hidden rotation_10 0 0.9999999999999999 0 2.459961941641905
+  hidden linearVelocity_10 -0.04513243359668664 0.019431418201662578 2.188418354093292e-05
+  hidden angularVelocity_10 -0.5885707004059909 -1.3669728745793641 -0.004477783105624246
+  hidden rotation_11 0.9830033375244996 -1.9193871215421345e-06 -0.18358768589426386 3.1415952841240014
+  hidden linearVelocity_11 -0.04578900047168011 0.01971588183250721 -9.513135466570409e-06
+  hidden angularVelocity_11 -0.5977210637217296 -1.3882177224054366 -0.004478121598839604
+  hidden rotation_12 0.8588927260697584 0.46998168371696186 -0.2035202743586705 4.8203744248411695
+  hidden linearVelocity_12 -0.04560531200404961 0.019247812215857134 -4.673832248399781e-06
+  hidden angularVelocity_12 -4.811953053908678 -11.401328001035678 -0.10749325283226974
+  translation -1.7184224056596493 1.7503754592258542 -0.0002531487980640054
+  rotation 0.0022621441775251662 -0.00046489481283992 0.9999973332847109 2.7348025870736494
   controller "turtlebot3_ostacle_avoidance"
   extensionSlot [
     DEF TURTLE_ANCHOR Solid {
@@ -585,7 +514,7 @@ Table {
   feetSize 0.045 0.045
 }
 Table {
-  translation -0.710596 1.57575 0
+  translation -0.672354 1.57422 4.44089e-16
   rotation 0 0 1 5.30716e-06
   name "coffee_table"
   size 0.21 0.39 0.16
@@ -619,8 +548,8 @@ Robot {
   supervisor TRUE
 }
 DEF ROPE_VIS Pose {
-  translation -0.6379950866787673 0.6683738341385603 0.13362491389839584
-  rotation 0 0.46866285455133055 0.8833771158252847 1.906438378567827
+  translation -1.6976092743082054 1.9327055056730467 0.13364405592994516
+  rotation 0 0.19138969356575272 0.9815141288829251 1.3664148974929975
   children [
     Shape {
       appearance PBRAppearance {
@@ -634,8 +563,8 @@ DEF ROPE_VIS Pose {
   ]
 }
 Solid {
-  translation 2.021975710043987 -1.959720162422949 0.09731642135032961
-  rotation -0.03796504037966787 0.9991578664462153 0.015563213923129222 0.00022156258077453438
+  translation 2.021975188414113 -1.9597201870694752 0.09731487391577567
+  rotation -0.037965189901105124 0.9991581804412346 0.015542677154671296 0.00022169121158862728
   children [
     Solid {
       translation 0.3181 0 0.095
@@ -814,12 +743,12 @@ Solid {
   }
   physics Physics {
   }
-  linearVelocity 1.3046316048291656e-07 4.986800447212762e-09 -1.547483058016284e-05
-  angularVelocity -4.9273120934782986e-08 1.2890732699907268e-06 2.2851332666374644e-12
+  linearVelocity 2.6520183418676578e-08 1.0145676355683265e-09 -3.1677472721213135e-06
+  angularVelocity -1.0024647017422312e-08 2.6203917843197163e-07 4.660043799903434e-13
 }
 Solid {
-  translation 1.8528034281991836 1.265155049045877 0.09731642135032963
-  rotation -0.00011489331754750798 0.00010647417162328851 0.9999999877313881 1.5708704887703098
+  translation 1.8528034524236572 1.2651544114233275 0.09731487391577573
+  rotation -0.00011496007176458825 0.00010653600487416272 0.9999999877171306 1.570870485957869
   children [
     Solid {
       translation 0.3181 0 0.095
@@ -998,12 +927,12 @@ Solid {
   }
   physics Physics {
   }
-  linearVelocity -4.996024352399688e-09 1.3046280754450055e-07 -1.547483058009695e-05
-  angularVelocity -1.2890697823148084e-06 -4.936426001575228e-08 2.2851030168274383e-12
+  linearVelocity -1.016442609511239e-09 2.6520111604421007e-08 -3.1677472721210056e-06
+  angularVelocity -2.6203846945822676e-07 -1.0043172871462692e-08 4.660033738574949e-13
 }
 Solid {
-  translation 0.011310875225194417 1.536234381376785 0.18772890025901906
-  rotation -0.9999672697420727 0.002243918176951328 0.007773305332996341 1.5708567547223777
+  translation 0.014978072650439794 1.6053299574176014 0.18749316352104262
+  rotation -0.9999685927694069 0.0029244609217271987 0.0073662068318454945 1.5708505907424228
   children [
     Solid {
       translation -0.14 0.07 0.26
@@ -1122,12 +1051,12 @@ Solid {
   }
   physics Physics {
   }
-  linearVelocity 0.00018506633927367963 1.023358563225447e-06 -0.0017801328142269491
-  angularVelocity -1.253645895809985e-05 0.0022671199025470824 -1.1211248960654603e-14
+  linearVelocity 1.745596487875585e-06 7.753869047015549e-09 -1.5906384453753033e-05
+  angularVelocity -9.499757887692193e-08 2.1386412232633833e-05 1.2415741474318426e-16
 }
 Solid {
-  translation -0.728751689032843 2.37866211528356 0.18772890025901906
-  rotation 0.579746369392318 0.5732518317589754 -0.579030642161022 -2.099465759258422
+  translation -1.7504779619146513 -2.359041627155786 0.18749316352104264
+  rotation -0.5825736194588289 0.577725775550489 -0.5717000141466023 2.0777689970484694
   children [
     Solid {
       translation -0.14 0.07 0.26
@@ -1246,6 +1175,254 @@ Solid {
   }
   physics Physics {
   }
-  linearVelocity 2.3092072966180646e-07 0.00018506902461114897 -0.001780132814226822
-  angularVelocity -0.002267152798761548 2.828850365109986e-06 -1.1209090003960975e-14
+  linearVelocity 3.2548861065942965e-08 -1.7453102282562007e-06 -1.590638445395356e-05
+  angularVelocity 2.1382905084040263e-05 3.987767876641814e-07 6.352822248663176e-17
+}
+Solid {
+  translation -1.754101403733869 -1.3222509576467205 0.18749316352104262
+  rotation -0.5633186424592903 -0.581349490690936 0.5871157268641435 2.1247220571990773
+  children [
+    Solid {
+      translation -0.14 0.07 0.26
+      rotation 0 1 0 1.5708
+      children [
+        Shape {
+          appearance Appearance {
+            material Material {
+              diffuseColor 0.3 0.3 0.4
+            }
+          }
+          geometry Capsule {
+            height 0.2
+            radius 0.03
+          }
+        }
+      ]
+      name "arm(1)"
+      boundingObject Capsule {
+        height 0.2
+        radius 0.03
+        subdivision 16
+      }
+      physics Physics {
+      }
+    }
+    Solid {
+      translation -0.14 0.07 -0.26
+      rotation 0 1 0 1.5708
+      children [
+        Shape {
+          appearance Appearance {
+            material Material {
+              diffuseColor 0.3 0.3 0.4
+            }
+          }
+          geometry Capsule {
+            height 0.2
+            radius 0.03
+          }
+        }
+      ]
+      name "arm"
+      boundingObject Capsule {
+        height 0.2
+        radius 0.03
+        subdivision 16
+      }
+      physics Physics {
+      }
+    }
+    Solid {
+      translation 0 0.06 0
+      children [
+        Shape {
+          appearance Appearance {
+            material Material {
+              diffuseColor 0.3 0.3 0.4
+            }
+          }
+          geometry Capsule {
+            height 0.5
+            radius 0.04
+          }
+        }
+      ]
+      name "duplicate"
+      boundingObject Capsule {
+        height 0.5
+        radius 0.04
+        subdivision 16
+      }
+      physics Physics {
+      }
+    }
+    Solid {
+      translation -0.11 0.15 0
+      children [
+        Shape {
+          appearance Appearance {
+            material Material {
+              diffuseColor 0.3 0.3 0.4
+            }
+          }
+          geometry Box {
+            size 0.3 0.1 0.55
+          }
+        }
+      ]
+      name "sofa_body"
+      boundingObject Box {
+        size 0.3 0.095 0.55
+      }
+      physics Physics {
+      }
+    }
+    Shape {
+      appearance Appearance {
+        material Material {
+          diffuseColor 0.3 0.3 0.4
+        }
+        texture ImageTexture {
+        }
+      }
+      geometry Capsule {
+        height 0.5
+        radius 0.04
+      }
+    }
+  ]
+  name "sofa(3)"
+  boundingObject Capsule {
+    height 0.5
+    radius 0.04
+    subdivision 16
+  }
+  physics Physics {
+  }
+  linearVelocity -7.293228472144331e-08 1.7440894768454281e-06 -1.5906384453995664e-05
+  angularVelocity -2.1367948883114457e-05 -8.935397824941445e-07 5.674322681246771e-17
+}
+Solid {
+  translation -0.7309425747007391 2.375979468200463 0.18749316425688284
+  rotation -0.5751676515488143 -0.5754867579629274 0.5813752351288628 2.1066410466499534
+  children [
+    Solid {
+      translation -0.14 0.07 0.26
+      rotation 0 1 0 1.5708
+      children [
+        Shape {
+          appearance Appearance {
+            material Material {
+              diffuseColor 0.3 0.3 0.4
+            }
+          }
+          geometry Capsule {
+            height 0.2
+            radius 0.03
+          }
+        }
+      ]
+      name "arm(1)"
+      boundingObject Capsule {
+        height 0.2
+        radius 0.03
+        subdivision 16
+      }
+      physics Physics {
+      }
+    }
+    Solid {
+      translation -0.14 0.07 -0.26
+      rotation 0 1 0 1.5708
+      children [
+        Shape {
+          appearance Appearance {
+            material Material {
+              diffuseColor 0.3 0.3 0.4
+            }
+          }
+          geometry Capsule {
+            height 0.2
+            radius 0.03
+          }
+        }
+      ]
+      name "arm"
+      boundingObject Capsule {
+        height 0.2
+        radius 0.03
+        subdivision 16
+      }
+      physics Physics {
+      }
+    }
+    Solid {
+      translation 0 0.06 0
+      children [
+        Shape {
+          appearance Appearance {
+            material Material {
+              diffuseColor 0.3 0.3 0.4
+            }
+          }
+          geometry Capsule {
+            height 0.5
+            radius 0.04
+          }
+        }
+      ]
+      name "duplicate"
+      boundingObject Capsule {
+        height 0.5
+        radius 0.04
+        subdivision 16
+      }
+      physics Physics {
+      }
+    }
+    Solid {
+      translation -0.11 0.15 0
+      children [
+        Shape {
+          appearance Appearance {
+            material Material {
+              diffuseColor 0.3 0.3 0.4
+            }
+          }
+          geometry Box {
+            size 0.3 0.1 0.55
+          }
+        }
+      ]
+      name "sofa_body"
+      boundingObject Box {
+        size 0.3 0.095 0.55
+      }
+      physics Physics {
+      }
+    }
+    Shape {
+      appearance Appearance {
+        material Material {
+          diffuseColor 0.3 0.3 0.4
+        }
+        texture ImageTexture {
+        }
+      }
+      geometry Capsule {
+        height 0.5
+        radius 0.04
+      }
+    }
+  ]
+  name "sofa(2)"
+  boundingObject Capsule {
+    height 0.5
+    radius 0.04
+    subdivision 16
+  }
+  physics Physics {
+  }
+  linearVelocity -2.050881223886202e-08 1.753249544242529e-06 -1.5903686673991936e-05
+  angularVelocity -2.148017726291962e-05 -2.512528679717423e-07 4.353670422838477e-11
 }

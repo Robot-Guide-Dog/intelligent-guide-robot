@@ -277,6 +277,16 @@ class RosbotSlamController:
         self.base_speed = 2.5
         self.max_velocity = 20.0
 
+        self.lidar_max_range = self.lidar.getMaxRange()
+        self.lidar_min_range = self.lidar.getMinRange()
+
+        print(
+            f"Lidar enabled: {self.lidar_width} points, "
+            f"FOV: {math.degrees(self.lidar_fov):.1f}°, "
+            f"Range: {self.lidar_min_range:.2f}-{self.lidar_max_range:.2f}m"
+        )
+
+
         print("Rosbot SLAM Controller initialized")
         print(f"Time step: {self.time_step}ms")
         print(f"Particle Filter: {self.slam.num_particles} particles")
@@ -443,8 +453,8 @@ class RosbotSlamController:
 
             angle_step = self.lidar_fov / len(range_image)
 
-            front_start_idx = int(len(range_image) * 0.375)
-            front_end_idx = int(len(range_image) * 0.625)
+            front_start_idx = int(len(range_image) * 0.4)
+            front_end_idx = int(len(range_image) * 0.55)
 
             min_dist = float("inf")
             min_angle = 0.0
@@ -465,52 +475,63 @@ class RosbotSlamController:
         return None, None
 
     def compute_motor_speeds(self):
-        """
-        Basic obstacle avoidance + stuck recovery.
-        """
-
-        # 1. Check if robot is stuck against wall
-        if self.is_robot_stuck():
-            print("Robot stuck → reversing")
-
-            # strong reverse
-            left = -3.0
-            right = -3.0  
-            return left, right
-
-        # 2. Normal front obstacle detection
+        """Compute motor speeds with obstacle avoidance."""
         front_obstacle_dist, front_obstacle_angle = self.detect_front_obstacle()
 
-        # Too close? Back up + turn
-        if front_obstacle_dist is not None and front_obstacle_dist < 0.15:
-            backup_speed = -3.0
-            turn_speed = 2.0
+        self.reverse_if_needed(front_obstacle_dist)
 
-            if front_obstacle_angle > 0:
-                return backup_speed + turn_speed, backup_speed - turn_speed
-            else:
-                return backup_speed - turn_speed, backup_speed + turn_speed
-
-        # 3. Slight steering for moderate obstacles
-        base = self.base_speed
-        left = base
-        right = base
-
-        if front_obstacle_dist is not None and front_obstacle_angle is not None:
-            if front_obstacle_dist < 0.4:
-                steer = (0.4 - front_obstacle_dist) * 5.0
+        if front_obstacle_dist is not None and front_obstacle_dist < 0.2:
+            if front_obstacle_angle is not None:
+                backup_speed = -2.5
+                turn_speed = 2.0
                 if front_obstacle_angle > 0:
-                    left += steer
-                    right -= steer
+                    return [
+                        backup_speed + turn_speed,
+                        backup_speed - turn_speed * 0.3,
+                    ]
+                return [
+                    backup_speed - turn_speed * 0.3,
+                    backup_speed + turn_speed,
+                ]
+            return [-2.5, -2.5]
+
+        if front_obstacle_dist is not None and front_obstacle_dist < 0.35:
+            if front_obstacle_angle is not None:
+                turn_speed = 3.0
+                if front_obstacle_angle > 0:
+                    return [turn_speed, -turn_speed * 0.1]
+                return [-turn_speed * 0.1, turn_speed]
+            return [0.0, 0.0]
+
+        base_speeds = [self.base_speed, self.base_speed]
+
+        avoidance_speed = [0.0, 0.0]
+        if front_obstacle_dist is not None and front_obstacle_angle is not None:
+            avoidance_strength = 8.0
+            if front_obstacle_dist < 0.4:
+                factor = (0.4 - front_obstacle_dist) / 0.4
+                if front_obstacle_angle > 0:
+                    avoidance_speed[0] += factor * avoidance_strength
+                    avoidance_speed[1] -= factor * avoidance_strength * 0.9
                 else:
-                    left -= steer
-                    right += steer
+                    avoidance_speed[0] -= factor * avoidance_strength * 0.9
+                    avoidance_speed[1] += factor * avoidance_strength
 
-        # clamp speeds
-        left = max(-self.max_velocity, min(left, self.max_velocity))
-        right = max(-self.max_velocity, min(right, self.max_velocity))
+        if front_obstacle_dist is not None and front_obstacle_dist < 0.40:
+            motor_speed = [
+                base_speeds[0] * 0.1 + avoidance_speed[0] * 1.5,
+                base_speeds[1] * 0.1 + avoidance_speed[1] * 1.5,
+            ]
+        else:
+            motor_speed = [
+                base_speeds[0] + avoidance_speed[0] * 0.6,
+                base_speeds[1] + avoidance_speed[1] * 0.6,
+            ]
 
-        return left, right
+        motor_speed[0] = max(-self.max_velocity, min(motor_speed[0], self.max_velocity))
+        motor_speed[1] = max(-self.max_velocity, min(motor_speed[1], self.max_velocity))
+
+        return motor_speed
 
     def set_motor_velocities(self, left_speed, right_speed):
         """Set motor velocities."""
@@ -523,18 +544,46 @@ class RosbotSlamController:
         if self.rear_right_motor:
             self.rear_right_motor.setVelocity(right_speed)
 
-    # STUCK DETECTOR
-    def is_robot_stuck(self):
+    # STUCK
+    def reverse_if_needed(self, dist):
         """
-        Return True if robot is extremely close to a wall (lidar distance < 0.10 m)
+        Reverse if an obstacle is closer than 1.5 meters.
         """
-        front_dist, _ = self.detect_front_obstacle()
+        if dist is None:
+            return
 
-        if front_dist is not None and front_dist < 0.10:
-            return True
+        if dist < 0.15:
+            print(f"Obstacle at {dist:.2f}m → reversing")
 
-        return False
+            # Reverse for a short duration
+            for _ in range(15):  # about 150–200 ms
+                self.set_motor_velocities(-3.0, -3.0)  # reverse speed
+                self.robot.step(self.time_step)
 
+            print("Reverse complete")
+
+    def detect_side_walls(self):
+        """Return (left_min_dist, right_min_dist) from lidar."""
+        if not self.lidar:
+            return None, None
+
+        ranges = self.lidar.getRangeImage()
+        if not ranges:
+            return None, None
+
+        n = len(ranges)
+
+        # Left = first 20% of lidar
+        left_ranges = ranges[:int(n * 0.2)]
+
+        # Right = last 20% of lidar
+        right_ranges = ranges[int(n * 0.8):]
+
+        # Get nearest valid hit
+        left_min  = min([d for d in left_ranges if d > 0], default=5.0)
+        right_min = min([d for d in right_ranges if d > 0], default=5.0)
+
+        return left_min, right_min
 
     # COLOR + DEPTH DETECTION
 
@@ -700,20 +749,38 @@ class RosbotSlamController:
 
         if front_obstacle_dist is None:
             return left, right
+        
+        left_wall, right_wall = self.detect_side_walls()
 
-        if front_obstacle_dist < 0.4:
-            print("Obstacle very close → rotate")
-            left = 2.5
+        # Corner escape condition
+        if left_wall < 0.3 and right_wall < 0.3 and front_obstacle_dist < 0.4:
+            print("Corner detected → FORCE TURN LEFT")
+            return -1.5, 3.0   # Back left wheel / forward right wheel
+
+        
+        if front_obstacle_dist < 0.2:
+            print(f"Obstacle {front_obstacle_dist:.2f}m → reversing")
+            left = -2.5
             right = -2.5
-        elif front_obstacle_dist < 0.3:
+            return left, right
+        
+        if front_obstacle_dist < 0.25:
+            print("Obstacle VERY close → spin in place")
+            left = 3
+            right = -3
+            return left, right
+        
+        # Close → turn away based on side
+        if front_obstacle_dist < 0.3:
             if front_obstacle_angle > 0:
-                print("Obstacle left → turn right")
-                left = 2.5
-                right = 0.5
-            else:
-                print("Obstacle right → turn left")
-                left = 0.5
+                print("Obstacle on RIGHT → turn LEFT")
+                left = 0
                 right = 2.5
+            else:
+                print("Obstacle on LEFT → turn RIGHT")
+                left = 2.5
+                right = 0
+            return left, right
 
         # Clamp
         left = max(-self.max_velocity, min(left, self.max_velocity))
