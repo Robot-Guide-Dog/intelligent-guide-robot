@@ -11,26 +11,10 @@ A robotic guide dog that follows another individual/robot in a domestic environm
 
 ## Quick Start
 
-### Running the Simulation
-
-1. **Open Webots:**
-   ```bash
-   /Applications/Webots.app/Contents/MacOS/webots worlds/domestic-environment.wbt
-   ```
-
-2. **Or use the launch script:**
-   ```bash
-   ./run_slam.sh standalone
-   ```
 
 ### SLAM (Simultaneous Localization and Mapping)
 
 The project includes SLAM capabilities:
-
-- **Standalone SLAM** (No ROS2 required) - Currently active
-- **ROS2 SLAM** (Advanced) - For full ROS2 integration
-
-See [QUICK_START_SLAM.md](QUICK_START_SLAM.md) for details.
 
 ### Controllers
 
@@ -57,26 +41,6 @@ intelligent-guide-robot/
 └── QUICK_START_SLAM.md        # SLAM quick start guide
 ```
 
-## Documentation
-
-- [QUICK_START_SLAM.md](QUICK_START_SLAM.md) - Quick start for SLAM
-- [SLAM_SETUP.md](SLAM_SETUP.md) - Detailed SLAM setup guide
-- [README_COMPILATION.md](README_COMPILATION.md) - Compilation instructions
-
-## Requirements
-
-- **Webots** R2025a or later
-- **Python 3.11+** (for controllers)
-- **ROS2** (optional, for ROS2 SLAM integration)
-
-## Building Controllers
-
-```bash
-./compile_from_terminal.sh
-```
-
-Or compile from Webots GUI: Right-click controller folder → "Make"
-
 ## SLAM Features
 
 The standalone SLAM controller:
@@ -85,16 +49,5 @@ The standalone SLAM controller:
 - ✅ Saves maps to JSON files
 - ✅ Works without ROS2 installation
 - ✅ Real-time mapping as robot moves
-
-## Next Steps
-
-1. **Integrate SLAM with following** - Use maps for navigation
-2. **Visualize maps** - Create visualization tools for saved maps
-3. **Add ROS2** - For advanced SLAM features (slam_toolbox)
-
-## License
-
-See individual file headers for license information.
-
 
 
