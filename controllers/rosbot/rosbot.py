@@ -267,6 +267,127 @@ class ParticleFilter:
         )
 
 
+import heapq
+
+
+class PathPlanner:
+    """A* pathfinding algorithm for navigation using occupancy grid."""
+    
+    def __init__(self, map_size=200, resolution=0.05):
+        self.map_size = map_size
+        self.resolution = resolution
+        self.map_center = [map_size // 2, map_size // 2]
+    
+    def world_to_grid(self, x, y):
+        """Convert world coordinates to grid indices."""
+        gx = int(self.map_center[0] + x / self.resolution)
+        gy = int(self.map_center[1] + y / self.resolution)
+        return (gx, gy)
+    
+    def grid_to_world(self, gx, gy):
+        """Convert grid indices to world coordinates."""
+        x = (gx - self.map_center[0]) * self.resolution
+        y = (gy - self.map_center[1]) * self.resolution
+        return (x, y)
+    
+    def heuristic(self, pos, goal):
+        """Euclidean distance heuristic."""
+        return math.sqrt((pos[0] - goal[0])**2 + (pos[1] - goal[1])**2)
+    
+    def get_neighbors(self, pos, occupancy_grid):
+        """Get valid neighboring cells (8-directional movement)."""
+        neighbors = []
+        x, y = pos
+        
+        # 8-directional movement (including diagonals)
+        directions = [
+            (-1, -1), (-1, 0), (-1, 1),
+            (0, -1),           (0, 1),
+            (1, -1),  (1, 0),  (1, 1)
+        ]
+        
+        for dx, dy in directions:
+            nx, ny = x + dx, y + dy
+            
+            # Check bounds
+            if 0 <= nx < self.map_size and 0 <= ny < self.map_size:
+                # Check if cell is not occupied (occupancy < 75 = free space)
+                if occupancy_grid[nx][ny] < 75:
+                    # Cost: 1.4 for diagonal, 1 for straight
+                    cost = 1.4 if dx != 0 and dy != 0 else 1.0
+                    neighbors.append(((nx, ny), cost))
+        
+        return neighbors
+    
+    def plan_path(self, start_world, goal_world, occupancy_grid):
+        """
+        Find path from start to goal using A* algorithm.
+        Returns list of (x, y) world coordinates, or empty list if no path found.
+        """
+        start_grid = self.world_to_grid(start_world[0], start_world[1])
+        goal_grid = self.world_to_grid(goal_world[0], goal_world[1])
+        
+        # Check if start and goal are valid
+        if not self._is_valid_cell(start_grid, occupancy_grid):
+            print(f"Start position invalid: {start_grid}")
+            return []
+        
+        if not self._is_valid_cell(goal_grid, occupancy_grid):
+            print(f"Goal position invalid: {goal_grid}")
+            return []
+        
+        # A* algorithm
+        open_set = []
+        heapq.heappush(open_set, (0, start_grid))
+        
+        came_from = {}
+        g_score = {start_grid: 0}
+        f_score = {start_grid: self.heuristic(start_grid, goal_grid)}
+        
+        closed_set = set()
+        
+        while open_set:
+            _, current = heapq.heappop(open_set)
+            
+            if current == goal_grid:
+                # Reconstruct path
+                path = self._reconstruct_path(came_from, current)
+                return [self.grid_to_world(gx, gy) for gx, gy in path]
+            
+            closed_set.add(current)
+            
+            for neighbor, cost in self.get_neighbors(current, occupancy_grid):
+                if neighbor in closed_set:
+                    continue
+                
+                tentative_g = g_score[current] + cost
+                
+                if neighbor not in g_score or tentative_g < g_score[neighbor]:
+                    came_from[neighbor] = current
+                    g_score[neighbor] = tentative_g
+                    f_score[neighbor] = tentative_g + self.heuristic(neighbor, goal_grid)
+                    heapq.heappush(open_set, (f_score[neighbor], neighbor))
+        
+        print(f"No path found from {start_grid} to {goal_grid}")
+        return []
+    
+    def _is_valid_cell(self, grid_pos, occupancy_grid):
+        """Check if a grid cell is valid and not occupied."""
+        gx, gy = grid_pos
+        if not (0 <= gx < self.map_size and 0 <= gy < self.map_size):
+            return False
+        # Cell is valid if occupancy < 75 (not heavily occupied)
+        return occupancy_grid[gx][gy] < 75
+    
+    def _reconstruct_path(self, came_from, current):
+        """Reconstruct path from A* search."""
+        path = [current]
+        while current in came_from:
+            current = came_from[current]
+            path.append(current)
+        return path[::-1]
+
+
 class RosbotSlamController:
     def __init__(self):
         if not WEBOTS_AVAILABLE:
@@ -277,6 +398,7 @@ class RosbotSlamController:
         self.time_step = int(self.robot.getBasicTimeStep())
 
         self.slam = ParticleFilter(num_particles=100, map_size=200, resolution=0.05)
+        self.path_planner = PathPlanner(map_size=200, resolution=0.05)
 
         self.init_devices()
 
@@ -307,6 +429,13 @@ class RosbotSlamController:
 
         self.base_speed = 2.5
         self.max_velocity = 20.0
+
+        # Path planning and waypoint following
+        self.current_path = []
+        self.current_waypoint_idx = 0
+        self.waypoint_threshold = 0.3  # Distance to consider waypoint reached (meters)
+        self.navigation_goal = None  # Target position for path planning
+
 
         print("Rosbot SLAM Controller initialised")
         print(f"Time step: {self.time_step}ms")
@@ -870,6 +999,86 @@ class RosbotSlamController:
         if self.rear_right_motor:
             self.rear_right_motor.setVelocity(right_speed)
 
+    def set_navigation_goal(self, goal_x, goal_y):
+        """Set a navigation goal and plan path to it."""
+        self.navigation_goal = (goal_x, goal_y)
+        self.current_path = []
+        self.current_waypoint_idx = 0
+        
+        # Plan path using current occupancy grid
+        start_pos = (self.robot_position[0], self.robot_position[1])
+        print(f"\n=== Path Planning ===")
+        print(f"Start: ({start_pos[0]:.2f}, {start_pos[1]:.2f})")
+        print(f"Goal: ({goal_x:.2f}, {goal_y:.2f})")
+        
+        self.current_path = self.path_planner.plan_path(start_pos, (goal_x, goal_y), self.slam.occupancy_grid)
+        
+        if self.current_path:
+            print(f"Path found with {len(self.current_path)} waypoints")
+            for i, wp in enumerate(self.current_path[:5]):  # Print first 5 waypoints
+                print(f"  WP{i}: ({wp[0]:.2f}, {wp[1]:.2f})")
+            self.current_waypoint_idx = 0
+        else:
+            print("No path found!")
+    
+    def compute_waypoint_motor_speeds(self):
+        """Compute motor speeds to follow planned waypoints."""
+        if not self.current_path or self.current_waypoint_idx >= len(self.current_path):
+            # No path or reached end
+            return [0.0, 0.0]
+        
+        # Get current waypoint
+        waypoint = self.current_path[self.current_waypoint_idx]
+        robot_x, robot_y = self.robot_position[0], self.robot_position[1]
+        
+        # Distance to waypoint
+        dx = waypoint[0] - robot_x
+        dy = waypoint[1] - robot_y
+        distance_to_waypoint = math.sqrt(dx**2 + dy**2)
+        
+        # If waypoint reached, move to next one
+        if distance_to_waypoint < self.waypoint_threshold:
+            self.current_waypoint_idx += 1
+            if self.current_waypoint_idx >= len(self.current_path):
+                print("✓ Reached goal!")
+                return [0.0, 0.0]
+            waypoint = self.current_path[self.current_waypoint_idx]
+            dx = waypoint[0] - robot_x
+            dy = waypoint[1] - robot_y
+            distance_to_waypoint = math.sqrt(dx**2 + dy**2)
+        
+        # Desired angle to waypoint
+        desired_angle = math.atan2(dy, dx)
+        
+        # Current robot angle
+        current_angle = self.robot_orientation
+        
+        # Calculate angle error (normalize to [-pi, pi])
+        angle_error = desired_angle - current_angle
+        while angle_error > math.pi:
+            angle_error -= 2 * math.pi
+        while angle_error < -math.pi:
+            angle_error += 2 * math.pi
+        
+        # Proportional control for steering and speed
+        # Stronger turn if angle error is large
+        turn_gain = 3.0
+        turn_component = turn_gain * angle_error
+        
+        # Speed reduces when heading is wrong
+        forward_gain = 0.8
+        forward_component = forward_gain * self.base_speed * max(0, math.cos(angle_error))
+        
+        # Motor speeds: base_speed + steering adjustment
+        left_speed = forward_component + turn_component
+        right_speed = forward_component - turn_component
+        
+        # Clamp to max velocity
+        left_speed = max(-self.max_velocity, min(left_speed, self.max_velocity))
+        right_speed = max(-self.max_velocity, min(right_speed, self.max_velocity))
+        
+        return [left_speed, right_speed]
+
     # COLOR + DEPTH DETECTION
 
     @staticmethod
@@ -1215,12 +1424,17 @@ class RosbotSlamController:
                 cx, cy, user_distance = self.detect_user()
 
             if cx is not None:
-                # User detected
+                # User detected - follow user instead of planned path
                 print(f"User detected at ({cx},{cy}), depth={user_distance}")
                 forward = self.compute_follow_speed(user_distance)
                 left_speed, right_speed = self.compute_follow_motor_speeds(forward)
+                self.navigation_goal = None  # Cancel any active path planning
+                self.current_path = []
+            elif self.navigation_goal is not None and len(self.current_path) > 0:
+                # Following planned path (no user detected)
+                left_speed, right_speed = self.compute_waypoint_motor_speeds()
             else:
-                # No user → pure obstacle avoidance based on lidar
+                # No user and no active path - pure obstacle avoidance
                 left_speed, right_speed = self.compute_motor_speeds()
 
             self.set_motor_velocities(left_speed, right_speed)
@@ -1280,6 +1494,15 @@ class RosbotSlamController:
                 self.slam.save_map(f"slam_map_{step_count}.json")
                 print(f"Map and pose saved at step {step_count}")
 
+            # Trigger path planning demo at step 1500 (let SLAM build map first)
+            if step_count == 1500 and self.navigation_goal is None:
+                # Set a goal location (2 meters to the right)
+                goal_x = self.robot_position[0] + 2.0
+                goal_y = self.robot_position[1] + 0.5
+                print(f"\n*** TRIGGERING PATH PLANNING TEST ***")
+                print(f"Current robot position: ({self.robot_position[0]:.2f}, {self.robot_position[1]:.2f})")
+                self.set_navigation_goal(goal_x, goal_y)
+            
             step_count += 1
 
         self.slam.save_map("slam_map_final.json")
