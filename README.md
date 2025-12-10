@@ -38,14 +38,12 @@ intelligent-guide-robot/
 │   ├── turtlebot3_ostacle_avoidance/ # Target robot motion
 │   └── rope_supervisor/        # Following supervisor
 ├── worlds/
-│   └── domestic-environment.wbt    # Main simulation world
-├── ros2_ws/
-    └── src/webots_slam/            # Optional ROS2 package
+    └── domestic-environment.wbt    # Main simulation world
 ```
 
-## Running the simulation (Webots)
+## Running the simulation (Webots R2025a)
 
-1) Open `worlds/domestic-environment.wbt` in Webots R2025a.  
+1) Open `worlds/domestic-environment.wbt` in Webots.  
 2) Set the ROSbot controller to `rosbot` (particle-filter SLAM)  
 3) Set the TurtleBot3 to `turtlebot3_ostacle_avoidance` to act as the moving user target.  
 4) Optionally enable `rope_supervisor` for the following behaviour.  
