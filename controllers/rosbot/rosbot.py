@@ -271,6 +271,12 @@ class RosbotSlamController:
         self.last_odom_pose = [0.0, 0.0, 0.0]
         self.label_supported = hasattr(self.robot, "setLabel")
 
+        # Stuck / escape bookkeeping
+        self.stuck_ticks = 0
+        self.wall_detected_ticks = 0  # Track consecutive wall detections
+        self.escape_steps = 0
+        self.escape_dir = -1  # -1 = left, 1 = right
+
         self.wheel_radius = 0.05
         self.wheel_base = 0.22
 
@@ -442,7 +448,7 @@ class RosbotSlamController:
         self.slam.update(range_image, angles)
 
     def detect_front_obstacle(self):
-        """Detect obstacles directly in front of robot."""
+        """Detect obstacles in front of robot (wider forward arc)."""
         if not self.lidar:
             return None, None
 
@@ -453,8 +459,9 @@ class RosbotSlamController:
 
             angle_step = self.lidar_fov / len(range_image)
 
-            front_start_idx = int(len(range_image) * 0.4)
-            front_end_idx = int(len(range_image) * 0.55)
+            # Widen front detection to 25-75% (50% of scan, ~180° forward arc)
+            front_start_idx = int(len(range_image) * 0.25)
+            front_end_idx = int(len(range_image) * 0.75)
 
             min_dist = float("inf")
             min_angle = 0.0
@@ -473,12 +480,99 @@ class RosbotSlamController:
             pass
 
         return None, None
+    
+    def detect_any_close_obstacle(self, threshold=0.5):
+        """Check if ANY obstacle is within threshold distance in forward 180° arc."""
+        if not self.lidar:
+            return False, None
+
+        try:
+            range_image = self.lidar.getRangeImage()
+            if not range_image or len(range_image) == 0:
+                return False, None
+
+            # Check forward 180° arc (25-75% of scan)
+            front_start_idx = int(len(range_image) * 0.25)
+            front_end_idx = int(len(range_image) * 0.75)
+
+            for i in range(front_start_idx, front_end_idx):
+                dist = range_image[i]
+                if not (math.isnan(dist) or math.isinf(dist) or dist <= 0):
+                    if dist < threshold:
+                        return True, dist
+        except Exception:
+            pass
+
+        return False, None
 
     def compute_motor_speeds(self):
         """Compute motor speeds with obstacle avoidance."""
+        # Triggers an escape if a wall is detected first. If not, it will continue to follow the wall.
+        escape = self.escape_command()
+        if escape:
+            return escape
+
         front_obstacle_dist, front_obstacle_angle = self.detect_front_obstacle()
+        
+        has_close_obstacle, close_dist = self.detect_any_close_obstacle(threshold=0.5)
+        
+        # If any obstacle's very close, it will trigger an escape instead of just stopping
+        if has_close_obstacle and close_dist is not None and close_dist < 0.25:
+            self.wall_detected_ticks += 1
+            left_wall, right_wall = self.detect_side_walls()
+            
+            # Determines which direction to turn (toward more space)
+            turn_left = True
+            if left_wall is not None and right_wall is not None:
+                turn_left = left_wall > right_wall
+            elif front_obstacle_angle is not None:
+                # Turn away from the obstacle
+                turn_left = front_obstacle_angle < 0
+            else:
+                turn_left = random.random() > 0.5
+            
+            # Trigger escape immediately if wall detected multiple times, or after first detection
+            if self.wall_detected_ticks >= 2 or self.escape_steps == 0:
+                self.trigger_escape(turn_left, reason=f"WALL DETECTED at {close_dist:.2f}m")
+                return self.escape_command()
+            else:
+                print(f"WALL DETECTED at {close_dist:.2f}m → backing up")
+                if turn_left:
+                    return [-2.0, 1.5]  # Back left, forward right
+                else:
+                    return [1.5, -2.0]  # Forward left, back right
+        else:
+            self.wall_detected_ticks = 0
 
         self.reverse_if_needed(front_obstacle_dist)
+
+        left_wall, right_wall = self.detect_side_walls()
+
+        if front_obstacle_dist is not None and front_obstacle_dist < 0.32:
+            self.stuck_ticks += 1
+        else:
+            self.stuck_ticks = 0
+
+        if (
+            self.stuck_ticks > 8
+            or (
+                left_wall is not None
+                and right_wall is not None
+                and left_wall < 0.35
+                and right_wall < 0.35
+                and front_obstacle_dist is not None
+                and front_obstacle_dist < 0.45
+            )
+            or (front_obstacle_dist is not None and front_obstacle_dist < 0.18)
+        ):
+            turn_left = True
+            if left_wall is not None and right_wall is not None:
+                turn_left = left_wall > right_wall
+            else:
+                turn_left = random.random() > 0.5
+
+            self.trigger_escape(turn_left, reason="Corner detected")
+            return self.escape_command()
 
         if front_obstacle_dist is not None and front_obstacle_dist < 0.2:
             if front_obstacle_angle is not None:
@@ -495,6 +589,7 @@ class RosbotSlamController:
                 ]
             return [-2.5, -2.5]
 
+        # Slow down significantly when approaching obstacles
         if front_obstacle_dist is not None and front_obstacle_dist < 0.35:
             if front_obstacle_angle is not None:
                 turn_speed = 3.0
@@ -503,13 +598,21 @@ class RosbotSlamController:
                 return [-turn_speed * 0.1, turn_speed]
             return [0.0, 0.0]
 
+        # Reduce base speed when obstacles are detected nearby
         base_speeds = [self.base_speed, self.base_speed]
+        
+        # If any close obstacle detected, reduce speed
+        if has_close_obstacle and close_dist is not None:
+            if close_dist < 0.5:
+                base_speeds = [self.base_speed * 0.3, self.base_speed * 0.3]  # Slow down
+            elif close_dist < 0.7:
+                base_speeds = [self.base_speed * 0.6, self.base_speed * 0.6]  # Moderate speed
 
         avoidance_speed = [0.0, 0.0]
         if front_obstacle_dist is not None and front_obstacle_angle is not None:
             avoidance_strength = 8.0
-            if front_obstacle_dist < 0.4:
-                factor = (0.4 - front_obstacle_dist) / 0.4
+            if front_obstacle_dist < 0.5:  # Increased from 0.4 to react earlier
+                factor = (0.5 - front_obstacle_dist) / 0.5
                 if front_obstacle_angle > 0:
                     avoidance_speed[0] += factor * avoidance_strength
                     avoidance_speed[1] -= factor * avoidance_strength * 0.9
@@ -517,7 +620,7 @@ class RosbotSlamController:
                     avoidance_speed[0] -= factor * avoidance_strength * 0.9
                     avoidance_speed[1] += factor * avoidance_strength
 
-        if front_obstacle_dist is not None and front_obstacle_dist < 0.40:
+        if front_obstacle_dist is not None and front_obstacle_dist < 0.50:  # Increased from 0.40
             motor_speed = [
                 base_speeds[0] * 0.1 + avoidance_speed[0] * 1.5,
                 base_speeds[1] * 0.1 + avoidance_speed[1] * 1.5,
@@ -533,6 +636,8 @@ class RosbotSlamController:
 
         return motor_speed
 
+
+    # Setting the motor velocities based on the left and right speeds given by the compute_motor_speeds function
     def set_motor_velocities(self, left_speed, right_speed):
         """Set motor velocities."""
         if self.front_left_motor:
@@ -554,13 +659,36 @@ class RosbotSlamController:
 
         if dist < 0.15:
             print(f"Obstacle at {dist:.2f}m → reversing")
-
-            # Reverse for a short duration
             for _ in range(15):  # about 150–200 ms
                 self.set_motor_velocities(-3.0, -3.0)  # reverse speed
                 self.robot.step(self.time_step)
 
             print("Reverse complete")
+
+    def trigger_escape(self, turn_left=True, reason="stuck"):
+        """
+        Schedule a multi-step escape turn to break out of tight corners.
+        """
+        self.escape_steps = max(self.escape_steps, 15)
+        self.escape_dir = -1 if turn_left else 1
+        side = "LEFT" if turn_left else "RIGHT"
+        print(f"{reason} → escape {side} for {self.escape_steps} steps")
+
+    def escape_command(self):
+        """
+        If an escape maneuver is active, emit the pre-set turn command.
+        """
+        if self.escape_steps <= 0:
+            return None
+
+        self.escape_steps -= 1
+        spin = 3.5
+        back = -2.0
+
+        if self.escape_dir < 0:  # turn left
+            return back, spin
+
+        return spin, back
 
     def detect_side_walls(self):
         """Return (left_min_dist, right_min_dist) from lidar."""
@@ -580,13 +708,19 @@ class RosbotSlamController:
         right_ranges = ranges[int(n * 0.8):]
 
         # Get nearest valid hit
-        left_min  = min([d for d in left_ranges if d > 0], default=5.0)
-        right_min = min([d for d in right_ranges if d > 0], default=5.0)
+        left_min = min(
+            [d for d in left_ranges if d > 0 and math.isfinite(d)],
+            default=5.0,
+        )
+        right_min = min(
+            [d for d in right_ranges if d > 0 and math.isfinite(d)],
+            default=5.0,
+        )
 
         return left_min, right_min
 
-    # COLOR + DEPTH DETECTION
 
+    # COLOR + DEPTH DETECTION: NAYLEA
     @staticmethod
     def rgb_to_hsv(r, g, b):
         """Convert RGB to HSV (float H in [0,360), S,V in [0,1])."""
@@ -676,11 +810,10 @@ class RosbotSlamController:
         if depth_img is None:
             return None
 
-        # Map RGB → depth coordinates
+        # Map RGB: depth coordinates
         dx = int(cx * dw / w)
         dy = int(cy * dh / h)
 
-        # Clamp to valid range
         dx = max(0, min(dx, dw - 1))
         dy = max(0, min(dy, dh - 1))
 
@@ -713,6 +846,8 @@ class RosbotSlamController:
         dist = self.get_user_depth(cx, cy)
         return cx, cy, dist
 
+    # The func computes the forward speed based on the distance to the user and the speed will be 0 if the user is too far or too close
+    # Essentailly to mimic a guide dog on a lead of whether it is pulling or not
     def compute_follow_speed(self, user_distance):
         """
         Depth-based forward speed.
@@ -739,6 +874,10 @@ class RosbotSlamController:
         """
         Lidar-based obstacle avoidance + user-following forward speed.
         """
+        escape = self.escape_command()
+        if escape:
+            return escape
+
         left = forward
         right = forward
 
@@ -746,18 +885,77 @@ class RosbotSlamController:
             return left, right
 
         front_obstacle_dist, front_obstacle_angle = self.detect_front_obstacle()
-
-        if front_obstacle_dist is None:
-            return left, right
+        
+        # Check for ANY close obstacle in forward arc (safety check)
+        has_close_obstacle, close_dist = self.detect_any_close_obstacle(threshold=0.5)
+        
+        # If any obstacle is very close, trigger escape instead of just stopping
+        if has_close_obstacle and close_dist is not None and close_dist < 0.25:
+            self.wall_detected_ticks += 1
+            left_wall, right_wall = self.detect_side_walls()
+            
+            # Determine which direction to turn (toward more clearance)
+            turn_left = True
+            if left_wall is not None and right_wall is not None:
+                turn_left = left_wall > right_wall
+            elif front_obstacle_angle is not None:
+                # Turn away from the obstacle
+                turn_left = front_obstacle_angle < 0
+            else:
+                turn_left = random.random() > 0.5
+            
+            # Trigger escape immediately if wall detected multiple times, or after first detection
+            if self.wall_detected_ticks >= 2 or self.escape_steps == 0:
+                self.trigger_escape(turn_left, reason=f"WALL DETECTED at {close_dist:.2f}m")
+                return self.escape_command()
+            else:
+                # First detection - back up and turn
+                print(f"WALL DETECTED at {close_dist:.2f}m → backing up")
+                if turn_left:
+                    return [-2.0, 1.5]  # Back left, forward right
+                else:
+                    return [1.5, -2.0]  # Forward left, back right
+        else:
+            self.wall_detected_ticks = 0
         
         left_wall, right_wall = self.detect_side_walls()
 
-        # Corner escape condition
-        if left_wall < 0.3 and right_wall < 0.3 and front_obstacle_dist < 0.4:
-            print("Corner detected → FORCE TURN LEFT")
-            return -1.5, 3.0   # Back left wheel / forward right wheel
+        # Track thr "stuck" condition when an obstacle is repeatedly close.
+        if front_obstacle_dist is not None and front_obstacle_dist < 0.32:
+            self.stuck_ticks += 1
+        else:
+            self.stuck_ticks = 0
 
-        
+        # If the robot is stuck, it will turn away from the obstacle
+        if (
+            self.stuck_ticks > 8
+            or (
+                left_wall is not None
+                and right_wall is not None
+                and left_wall < 0.35
+                and right_wall < 0.35
+                and front_obstacle_dist is not None
+                and front_obstacle_dist < 0.45
+            )
+            or (front_obstacle_dist is not None and front_obstacle_dist < 0.18)
+        ):
+            turn_left = True
+            if left_wall is not None and right_wall is not None:
+                # Turn toward the side with more clearance
+                turn_left = left_wall > right_wall
+            else:
+                turn_left = random.random() > 0.5
+
+            self.trigger_escape(turn_left, reason="Corner detected" if self.stuck_ticks > 0 else "Obstacle extremely close")
+            return self.escape_command()
+
+    # Basically checks if there is an obstacle in front of the robot and if there is, it will turn away from it
+        if front_obstacle_dist is None:
+            if has_close_obstacle and close_dist is not None and close_dist < 0.5:
+                left *= 0.3
+                right *= 0.3
+            return left, right
+
         if front_obstacle_dist < 0.2:
             print(f"Obstacle {front_obstacle_dist:.2f}m → reversing")
             left = -2.5
@@ -769,10 +967,9 @@ class RosbotSlamController:
             left = 3
             right = -3
             return left, right
-        
-        # Close → turn away based on side
+
         if front_obstacle_dist < 0.3:
-            if front_obstacle_angle > 0:
+            if front_obstacle_angle is not None and front_obstacle_angle > 0:
                 print("Obstacle on RIGHT → turn LEFT")
                 left = 0
                 right = 2.5
@@ -782,13 +979,19 @@ class RosbotSlamController:
                 right = 0
             return left, right
 
-        # Clamp
+        # Reduce forward speed when obstacles are nearby
+        if has_close_obstacle and close_dist is not None:
+            if close_dist < 0.5:
+                left *= 0.3  # Slow down significantly
+                right *= 0.3
+            elif close_dist < 0.7:
+                left *= 0.6  # Moderate speed
+                right *= 0.6
         left = max(-self.max_velocity, min(left, self.max_velocity))
         right = max(-self.max_velocity, min(right, self.max_velocity))
         return left, right
     
-    # DRAW SLAM MAP
-
+    # Draws the SLAM map on the display  (Not used in the final implementation)
     def draw_slam_map(self):
         if not self.display:
             return
@@ -838,8 +1041,7 @@ class RosbotSlamController:
         self.display.drawLine(gx, gy, int(hx), int(hy))
 
     
-    # MAIN LOOP
-
+    # Runs the main loop that controls the particle filter SLAM and the user following algorithm
     def run(self):
         """Main control loop."""
         step_count = 0
@@ -866,7 +1068,6 @@ class RosbotSlamController:
                 forward = self.compute_follow_speed(user_distance)
                 left_speed, right_speed = self.compute_follow_motor_speeds(forward)
             else:
-                # No user → pure obstacle avoidance based on lidar
                 left_speed, right_speed = self.compute_motor_speeds()
 
             self.set_motor_velocities(left_speed, right_speed)
@@ -875,7 +1076,7 @@ class RosbotSlamController:
             dx, dy, dtheta = self.compute_odometry()
             self.slam.predict(dx, dy, dtheta)
 
-            if step_count % 3 == 0:      # update map ~10 times/sec
+            if step_count % 3 == 0:     
                 self.draw_slam_map()
 
             if step_count % 5 == 0:
@@ -885,7 +1086,6 @@ class RosbotSlamController:
                     self.slam.resample()
                     resample_counter = 0
 
-            # 3) Debug + overlay
             if step_count % 100 == 0:
                 slam_x, slam_y, slam_theta = self.slam.get_best_estimate()
                 odom_x, odom_y = self.robot_position[0], self.robot_position[1]
