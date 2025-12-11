@@ -25,7 +25,7 @@ A simulated robotic guide dog that follows a human/robot target and navigates a 
 
 - SLAM, odometry, mapping, and avoidance: Kevin Titus.
 - Vision-based user detection and depth estimation: Sharifah Syed Yazid.
-- 
+- Path Planning, Project Demo: Princess Utti
 
 ## Repository layout
 
