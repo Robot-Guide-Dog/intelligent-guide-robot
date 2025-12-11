@@ -23,7 +23,7 @@
 #include <stdlib.h>
 
 #define TIME_STEP 64
-#define BASE_SPEED 1.5
+#define BASE_SPEED 2.5
 
 // gaussian function
 double gaussian(double x, double mu, double sigma) {
